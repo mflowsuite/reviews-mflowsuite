@@ -207,52 +207,56 @@ function applyTranslations(lang) {
   document.getElementById('rating-question').textContent =
     t.ratingQuestion.replace('{{businessName}}', biz);
 
+  // Helper: set text/placeholder solo si el elemento existe
+  const setText = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  const setHtml = (id, val) => { const el = document.getElementById(id); if (el) el.innerHTML  = val; };
+  const setPh   = (id, val) => { const el = document.getElementById(id); if (el) el.placeholder = val; };
+  const setCss  = (id, prop, val) => { const el = document.getElementById(id); if (el) el.style[prop] = val; };
+  const setVal  = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
+
   // Pantalla positive-write
-  document.getElementById('pw-headline').textContent  = t.pwHeadline;
-  document.getElementById('pw-subtitle').textContent  = t.pwSubtitle;
-  document.getElementById('pw-label').textContent     = t.pwLabel;
-  document.getElementById('copy-open-btn').innerHTML  = t.copyOpenBtn;
+  setText('pw-headline', t.pwHeadline);
+  setText('pw-subtitle', t.pwSubtitle);
+  setText('pw-label',    t.pwLabel);
+  setHtml('copy-open-btn', t.copyOpenBtn);
 
   // Pantalla negative
-  document.getElementById('neg-headline').textContent  = t.negHeadline;
-  document.getElementById('neg-subtitle').textContent  = t.negSubtitle;
-  document.getElementById('label-name').textContent    = t.labelName;
-  document.getElementById('label-contact').textContent = t.labelContact;
-  document.getElementById('label-comment').textContent = t.labelComment;
-  document.getElementById('field-name').placeholder    = t.phName;
-  document.getElementById('field-contact').placeholder = t.phContact;
-  document.getElementById('field-comment').placeholder = t.phComment;
-  document.getElementById('submit-btn').textContent    = t.submitBtn;
+  setText('neg-headline',   t.negHeadline);
+  setText('neg-subtitle',   t.negSubtitle);
+  setText('label-name',     t.labelName);
+  setText('label-contact',  t.labelContact);
+  setText('label-comment',  t.labelComment);
+  setPh('field-name',       t.phName);
+  setPh('field-contact',    t.phContact);
+  setPh('field-comment',    t.phComment);
+  setText('submit-btn',     t.submitBtn);
 
   // Thank you positivo
-  document.getElementById('ty-pos-headline').textContent = t.tyPosHeadline;
-  document.getElementById('ty-pos-body').textContent     = t.tyPosBody;
+  setText('ty-pos-headline', t.tyPosHeadline);
+  setText('ty-pos-body',     t.tyPosBody);
 
   // Thank you negativo
-  document.getElementById('ty-neg-headline').textContent = t.tyNegHeadline;
-  document.getElementById('ty-neg-body').textContent     = t.tyNegBody;
-  document.getElementById('ty-neg-closing').textContent  = t.tyNegClosing;
+  setText('ty-neg-headline', t.tyNegHeadline);
+  setText('ty-neg-body',     t.tyNegBody);
+  setText('ty-neg-closing',  t.tyNegClosing);
 
   // Incentivo
-  document.getElementById('incentive-headline').textContent = t.incentiveHeadline;
+  setText('incentive-headline', t.incentiveHeadline);
 
   // Foto prompts
   const photoText = (state.client && state.client.photoPromptText) || t.photoText;
-  document.getElementById('pw-photo-text').textContent  = photoText;
-  document.getElementById('neg-photo-text').textContent = photoText;
+  setText('pw-photo-text',  photoText);
+  setText('neg-photo-text', photoText);
 
-  // Foto upload visibilidad
+  // Foto solo en flujo negativo
   const photoEnabled = state.client &&
     (state.client.photoUploadEnabled === true || state.client.photoUploadEnabled === 'TRUE');
-  // Foto solo en flujo negativo (en positivo no tiene sentido, no llega a Google)
-  document.getElementById('photo-upload-wrap-pos').style.display = 'none';
-  document.getElementById('photo-upload-wrap-neg').style.display = photoEnabled ? 'block' : 'none';
+  setCss('photo-upload-wrap-pos', 'display', 'none');
+  setCss('photo-upload-wrap-neg', 'display', photoEnabled ? 'block' : 'none');
 
-  // Texto sugerido con IA o fallback
-  const reviewText = (state.client && (state.client.suggestedReviewAI || state.client.suggestedReviewText)) || '';
-  document.getElementById('review-text').value = reviewText;
-  if (!state.client?.suggestedReviewAI) {
-    document.getElementById('ai-badge').style.display = 'none';
+  // Guardar texto IA en state (se usa cuando el cliente hace click en "Ayudame con el texto")
+  if (state.client) {
+    state.client.suggestedReviewAI = state.client.suggestedReviewAI || null;
   }
 }
 
@@ -561,13 +565,17 @@ function showPhotoPreview(slot, dataUrl) {
 function removePhoto(slot) {
   if (slot === 'pos') {
     state.photoDataPos = null;
-    document.getElementById('photo-input-pos').value = '';
+    const inp = document.getElementById('photo-input-pos');
+    if (inp) inp.value = '';
   } else {
     state.photoDataNeg = null;
-    document.getElementById('photo-input-neg').value = '';
+    const inp = document.getElementById('photo-input-neg');
+    if (inp) inp.value = '';
   }
-  document.getElementById(`photo-preview-${slot}`).style.display = 'none';
-  document.getElementById(`photo-img-${slot}`).src = '';
+  const preview = document.getElementById(`photo-preview-${slot}`);
+  const img     = document.getElementById(`photo-img-${slot}`);
+  if (preview) preview.style.display = 'none';
+  if (img)     img.src = '';
 }
 
 /* ============================================================
