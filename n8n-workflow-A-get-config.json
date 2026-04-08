@@ -1,0 +1,324 @@
+{
+  "name": "Reseñas - A: Get Client Config",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "get-client-config",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-get-config",
+      "name": "Webhook GET",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appwlnvY7rceVb06Q",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblxTlomzuupQcgyY",
+          "mode": "id"
+        },
+        "filterByFormula": "={clientId}='{{ $json.query.clientId }}'",
+        "options": {
+          "fields": ["clientId","businessName","industry","language","logoUrl","googleReviewUrl","accentColor","suggestedReviewText","photoUploadEnabled","photoPromptText","incentiveEnabled","incentiveText","active"]
+        }
+      },
+      "id": "airtable-get-client",
+      "name": "Airtable - Buscar Cliente",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-found",
+              "leftValue": "={{ $json.fields.active }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-client-active",
+      "name": "IF - Cliente activo",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $credentials.value }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 120,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Genera una reseña corta y auténtica (máximo 2 oraciones) para {{ $('Airtable - Buscar Cliente').item.json.fields.businessName }}, un/a {{ $('Airtable - Buscar Cliente').item.json.fields.industry }}. Primera persona, {{ $('Airtable - Buscar Cliente').item.json.fields.language === 'es-ES' ? 'español de España' : $('Airtable - Buscar Cliente').item.json.fields.language === 'es-AR' ? 'español argentino' : 'español neutro' }}. Sin hashtags, sin comillas al inicio/fin, suena natural.\"\n    }\n  ]\n}",
+        "options": {
+          "timeout": 8000
+        }
+      },
+      "id": "claude-api-review-text",
+      "name": "Claude API - Generar texto reseña",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 220],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "assign-clientId",
+              "name": "clientId",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.clientId }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-businessName",
+              "name": "businessName",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.businessName }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-industry",
+              "name": "industry",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.industry }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-language",
+              "name": "language",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.language }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-logoUrl",
+              "name": "logoUrl",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.logoUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-googleReviewUrl",
+              "name": "googleReviewUrl",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.googleReviewUrl }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-accentColor",
+              "name": "accentColor",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.accentColor }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-suggestedReviewAI",
+              "name": "suggestedReviewAI",
+              "value": "={{ $json.content?.[0]?.text ?? null }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-suggestedReviewText",
+              "name": "suggestedReviewText",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.suggestedReviewText }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-photoUploadEnabled",
+              "name": "photoUploadEnabled",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.photoUploadEnabled ?? false }}",
+              "type": "boolean"
+            },
+            {
+              "id": "assign-photoPromptText",
+              "name": "photoPromptText",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.photoPromptText }}",
+              "type": "string"
+            },
+            {
+              "id": "assign-incentiveEnabled",
+              "name": "incentiveEnabled",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.incentiveEnabled ?? false }}",
+              "type": "boolean"
+            },
+            {
+              "id": "assign-incentiveText",
+              "name": "incentiveText",
+              "value": "={{ $('Airtable - Buscar Cliente').item.json.fields.incentiveText }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "set-response-data",
+      "name": "Set - Preparar respuesta",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1200, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-200",
+      "name": "Respond 200 OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1440, 220]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\": \"Client not found or inactive\"}",
+        "options": {
+          "responseCode": 404,
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Access-Control-Allow-Origin",
+                "value": "*"
+              },
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "respond-404",
+      "name": "Respond 404 Not Found",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 420]
+    }
+  ],
+  "connections": {
+    "Webhook GET": {
+      "main": [
+        [
+          {
+            "node": "Airtable - Buscar Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Airtable - Buscar Cliente": {
+      "main": [
+        [
+          {
+            "node": "IF - Cliente activo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF - Cliente activo": {
+      "main": [
+        [
+          {
+            "node": "Claude API - Generar texto reseña",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond 404 Not Found",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude API - Generar texto reseña": {
+      "main": [
+        [
+          {
+            "node": "Set - Preparar respuesta",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Preparar respuesta": {
+      "main": [
+        [
+          {
+            "node": "Respond 200 OK",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "tags": ["reseñas-positivas"]
+}

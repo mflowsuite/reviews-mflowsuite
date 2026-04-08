@@ -1,0 +1,299 @@
+{
+  "name": "Reseñas - B: Save Feedback",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "save-feedback",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-post-feedback",
+      "name": "Webhook POST",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-options",
+              "leftValue": "={{ $json.headers['request-method'] ?? $json.method ?? '' }}",
+              "rightValue": "OPTIONS",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-options-preflight",
+      "name": "IF - OPTIONS preflight",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin",  "value": "*" },
+              { "name": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+            ]
+          }
+        }
+      },
+      "id": "respond-preflight",
+      "name": "Respond - Preflight OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 180]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\n// Validar campos obligatorios\nconst required = ['clientId', 'rating', 'name', 'contact', 'comment'];\nfor (const field of required) {\n  if (!body[field] && body[field] !== 0) {\n    throw new Error(`Campo requerido faltante: ${field}`);\n  }\n}\n\n// Sanitizar: quitar HTML, limitar longitud\nconst sanitize = (val, max = 500) => {\n  if (!val) return '';\n  return String(val)\n    .replace(/<[^>]*>/g, '')\n    .replace(/[\\x00-\\x08\\x0B\\x0C\\x0E-\\x1F]/g, '')\n    .trim()\n    .substring(0, max);\n};\n\nreturn [{\n  json: {\n    timestamp:   new Date().toISOString(),\n    clientId:   sanitize(body.clientId, 50),\n    clientName: sanitize(body.clientName, 100),\n    rating:     parseInt(body.rating, 10),\n    name:       sanitize(body.name, 100),\n    contact:    sanitize(body.contact, 100),\n    comment:    sanitize(body.comment, 1000),\n    photoBase64: body.photoBase64 || null,\n    userAgent:  sanitize(body.userAgent, 200),\n    status:     'nuevo'\n  }\n}];"
+      },
+      "id": "code-validate-sanitize",
+      "name": "Code - Validar y sanitizar",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 380]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "id": "cond-has-photo",
+              "leftValue": "={{ $json.photoBase64 }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-photo",
+      "name": "IF - Tiene foto",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [960, 380]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "name": "={{ 'foto_' + $json.clientId + '_' + Date.now() + '.jpg' }}",
+        "driveId": { "__rl": true, "value": "MyDrive", "mode": "list" },
+        "folderId": {
+          "__rl": true,
+          "value": "REEMPLAZAR_CON_ID_CARPETA_DRIVE",
+          "mode": "id"
+        },
+        "binaryData": false,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "mediaContent": "={{ $json.photoBase64.replace(/^data:image\\/\\w+;base64,/, '') }}",
+        "options": {}
+      },
+      "id": "drive-upload-photo",
+      "name": "Drive - Subir foto",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [1200, 260],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "merge-photoUrl",
+              "name": "photoUrl",
+              "value": "={{ $json.webViewLink ?? $json.id ? 'https://drive.google.com/file/d/' + $json.id + '/view' : '' }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "set-photo-url",
+      "name": "Set - URL foto Drive",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1440, 260]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-empty-photo",
+              "name": "photoUrl",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "set-no-photo",
+      "name": "Set - Sin foto",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [1200, 500]
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "base": {
+          "__rl": true,
+          "value": "appwlnvY7rceVb06Q",
+          "mode": "id"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblyL1SGEnJ9gpM7Z",
+          "mode": "id"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp":  "={{ $json.timestamp }}",
+            "clientId":   "={{ $json.clientId }}",
+            "clientName": "={{ $json.clientName }}",
+            "rating":     "={{ $json.rating }}",
+            "name":       "={{ $json.name }}",
+            "contact":    "={{ $json.contact }}",
+            "comment":    "={{ $json.comment }}",
+            "photoUrl":   "={{ $json.photoUrl }}",
+            "userAgent":  "={{ $json.userAgent }}",
+            "status":     "nuevo"
+          }
+        }
+      },
+      "id": "airtable-create-feedback",
+      "name": "Airtable - Guardar feedback",
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2,
+      "position": [1680, 380]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"success\": true}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type",                "value": "application/json" }
+            ]
+          }
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond 200 Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1920, 380]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\": \"Validation failed\"}",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      },
+      "id": "respond-error",
+      "name": "Respond 400 Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [960, 580]
+    }
+  ],
+  "connections": {
+    "Webhook POST": {
+      "main": [
+        [{ "node": "IF - OPTIONS preflight", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF - OPTIONS preflight": {
+      "main": [
+        [{ "node": "Respond - Preflight OK",      "type": "main", "index": 0 }],
+        [{ "node": "Code - Validar y sanitizar",  "type": "main", "index": 0 }]
+      ]
+    },
+    "Code - Validar y sanitizar": {
+      "main": [
+        [{ "node": "IF - Tiene foto", "type": "main", "index": 0 }]
+      ],
+      "error": [
+        [{ "node": "Respond 400 Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "IF - Tiene foto": {
+      "main": [
+        [{ "node": "Drive - Subir foto", "type": "main", "index": 0 }],
+        [{ "node": "Set - Sin foto",     "type": "main", "index": 0 }]
+      ]
+    },
+    "Drive - Subir foto": {
+      "main": [
+        [{ "node": "Set - URL foto Drive", "type": "main", "index": 0 }]
+      ]
+    },
+    "Set - URL foto Drive": {
+      "main": [
+        [{ "node": "Airtable - Guardar feedback", "type": "main", "index": 0 }]
+      ]
+    },
+    "Set - Sin foto": {
+      "main": [
+        [{ "node": "Airtable - Guardar feedback", "type": "main", "index": 0 }]
+      ]
+    },
+    "Airtable - Guardar feedback": {
+      "main": [
+        [{ "node": "Respond 200 Success", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "errorWorkflow": ""
+  },
+  "tags": ["reseñas-positivas"]
+}

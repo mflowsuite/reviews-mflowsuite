@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#6C63FF" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>¿Cómo fue tu experiencia?</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <div class="page-bg" id="page-bg"></div>
+
+  <main class="card-wrap">
+    <div class="card">
+
+      <!-- SCREEN: loading -->
+      <div id="screen-loading" class="screen active" role="status" aria-live="polite">
+        <div class="loader-ring"></div>
+        <p class="loading-text">Cargando...</p>
+      </div>
+
+      <!-- SCREEN: error -->
+      <div id="screen-error" class="screen" role="alert">
+        <span class="emoji-display" aria-hidden="true">😕</span>
+        <h2>Enlace no válido</h2>
+        <p class="subtitle">Este código QR no está configurado. Pide uno nuevo al establecimiento.</p>
+      </div>
+
+      <!-- SCREEN: rating -->
+      <div id="screen-rating" class="screen">
+        <div class="client-header">
+          <img id="client-logo" class="client-logo" src="" alt="" />
+          <h1 id="client-name" class="client-name"></h1>
+        </div>
+        <p class="rating-question" id="rating-question">¿Cómo fue tu experiencia?</p>
+
+        <div id="emoji-display" class="emoji-display" aria-hidden="true">😐</div>
+
+        <div id="stars-container" class="stars-container" role="group" aria-label="Selecciona tu valoración"></div>
+
+        <p id="rating-label" class="rating-label">&nbsp;</p>
+      </div>
+
+      <!-- SCREEN: positive-write (pantalla intermedia antes de Google) -->
+      <div id="screen-positive-write" class="screen">
+        <span class="emoji-display animated-pop" aria-hidden="true">🎉</span>
+        <h2 id="pw-headline">¡Qué alegría saberlo!</h2>
+        <p class="subtitle" id="pw-subtitle">¿Nos regalas un minuto en Google? Tu opinión ayuda a muchas personas.</p>
+
+        <div class="review-text-wrap">
+          <label for="review-text" class="review-label" id="pw-label">Aquí tienes un texto para tu reseña — puedes editarlo:</label>
+          <div class="textarea-shell">
+            <textarea id="review-text" class="review-textarea" rows="4" placeholder="Escribe tu experiencia..."></textarea>
+            <span class="ai-badge" id="ai-badge" title="Generado con IA">✨ IA</span>
+          </div>
+        </div>
+
+        <!-- Campo foto (aparece si photoUploadEnabled=TRUE) -->
+        <div id="photo-upload-wrap-pos" class="photo-upload-wrap" style="display:none">
+          <label class="photo-label" id="pw-photo-label">
+            <span id="pw-photo-text">📷 Añadir foto (opcional)</span>
+            <input type="file" id="photo-input-pos" accept="image/*" class="photo-input" />
+          </label>
+          <div id="photo-preview-pos" class="photo-preview" style="display:none">
+            <img id="photo-img-pos" src="" alt="Vista previa" />
+            <button class="photo-remove" onclick="removePhoto('pos')" aria-label="Eliminar foto">✕</button>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="copy-open-btn" onclick="handleCopyAndOpen()">
+          <span>📋</span> Copiar y abrir Google
+        </button>
+        <a href="#" class="skip-link" onclick="showThankyouPositive(); return false;">Prefiero no hacerlo ahora</a>
+      </div>
+
+      <!-- SCREEN: positive-open (instrucción para pegar en Google) -->
+      <div id="screen-positive-open" class="screen">
+        <span class="emoji-display animated-bounce" aria-hidden="true">📋</span>
+        <h2>¡Texto copiado!</h2>
+        <div class="instruction-box">
+          <p>Se abrió Google en otra pestaña.</p>
+          <p><strong>Solo pega el texto y ponle 5 estrellas ⭐⭐⭐⭐⭐</strong></p>
+          <p class="instruction-hint">(Ctrl+V en PC / Mantén pulsado en móvil → Pegar)</p>
+        </div>
+        <button class="btn btn-success" onclick="showThankyouPositive()">
+          ✅ ¡Listo, ya lo dejé!
+        </button>
+        <a href="#" class="skip-link" onclick="showThankyouPositive(); return false;">Cerrar</a>
+      </div>
+
+      <!-- SCREEN: thankyou-positive -->
+      <div id="screen-thankyou-positive" class="screen">
+        <span class="emoji-display animated-pop" aria-hidden="true">⭐</span>
+        <h2 id="ty-pos-headline">¡Gracias de corazón!</h2>
+        <p class="subtitle" id="ty-pos-body">Tu reseña hace una gran diferencia para nosotros.</p>
+        <p class="closing-msg">¡Hasta la próxima! 👋</p>
+      </div>
+
+      <!-- SCREEN: negative -->
+      <div id="screen-negative" class="screen">
+        <span class="emoji-display" id="neg-emoji" aria-hidden="true">🙏</span>
+        <h2 id="neg-headline">Lamentamos que no haya sido lo esperado</h2>
+        <p class="subtitle" id="neg-subtitle">Tu experiencia nos importa. Cuéntanos qué pasó y haremos todo lo posible por mejorar.</p>
+
+        <form id="feedback-form" novalidate>
+          <div class="field-group">
+            <label for="field-name" id="label-name">Tu nombre</label>
+            <input type="text" id="field-name" name="name"
+                   autocomplete="given-name"
+                   placeholder="¿Cómo te llamas?" required />
+          </div>
+
+          <div class="field-group">
+            <label for="field-contact" id="label-contact">WhatsApp o email</label>
+            <input type="text" id="field-contact" name="contact"
+                   autocomplete="email"
+                   placeholder="Para que podamos contactarte" required />
+          </div>
+
+          <div class="field-group">
+            <label for="field-comment" id="label-comment">¿Qué podríamos mejorar?</label>
+            <textarea id="field-comment" name="comment" rows="3"
+                      placeholder="Cuéntanos tu experiencia con confianza, leemos todo..." required></textarea>
+          </div>
+
+          <!-- Campo foto negativo (aparece si photoUploadEnabled=TRUE) -->
+          <div id="photo-upload-wrap-neg" class="photo-upload-wrap" style="display:none">
+            <label class="photo-label" id="neg-photo-label">
+              <span id="neg-photo-text">📷 Añadir foto (opcional)</span>
+              <input type="file" id="photo-input-neg" accept="image/*" class="photo-input" />
+            </label>
+            <div id="photo-preview-neg" class="photo-preview" style="display:none">
+              <img id="photo-img-neg" src="" alt="Vista previa" />
+              <button type="button" class="photo-remove" onclick="removePhoto('neg')" aria-label="Eliminar foto">✕</button>
+            </div>
+          </div>
+
+          <div id="form-error" class="form-error" style="display:none" role="alert"></div>
+
+          <button type="submit" class="btn btn-primary" id="submit-btn">
+            Enviar comentario
+          </button>
+        </form>
+      </div>
+
+      <!-- SCREEN: thankyou-negative -->
+      <div id="screen-thankyou-negative" class="screen">
+        <span class="emoji-display animated-pop" aria-hidden="true">💜</span>
+        <h2 id="ty-neg-headline">¡Gracias por avisarnos!</h2>
+        <p class="subtitle" id="ty-neg-body">Recibimos tu mensaje. Un miembro de nuestro equipo se pondrá en contacto contigo a la brevedad.</p>
+        <p class="closing-msg" id="ty-neg-closing">Gracias por darnos la oportunidad de mejorar 🙌</p>
+      </div>
+
+      <!-- SCREEN: incentive (cupón — aparece si incentiveEnabled=TRUE) -->
+      <div id="screen-incentive" class="screen">
+        <span class="emoji-display animated-bounce" aria-hidden="true">🎁</span>
+        <h2 id="incentive-headline">¡Un regalo para ti!</h2>
+        <div class="coupon-box" id="coupon-box">
+          <div class="coupon-inner">
+            <img id="incentive-logo" class="incentive-logo" src="" alt="" />
+            <p id="incentive-text" class="incentive-text"></p>
+          </div>
+        </div>
+        <p class="incentive-hint">Muestra esta pantalla en caja para canjear tu regalo.</p>
+        <button class="btn btn-outline" onclick="closePage()">¡Entendido, gracias! 🙏</button>
+      </div>
+
+    </div><!-- /.card -->
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

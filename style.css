@@ -1,0 +1,564 @@
+/* ============================================================
+   VARIABLES & RESET
+   ============================================================ */
+:root {
+  --accent:        #6C63FF;
+  --accent-dark:   #4B44CC;
+  --accent-light:  #EEF0FF;
+  --star-off:      #DDD;
+  --star-on:       #FFD700;
+  --star-hover:    #FFC107;
+  --bg-gradient:   linear-gradient(145deg, #f0f2ff 0%, #e8f5e9 60%, #fff9e6 100%);
+  --card-bg:       #FFFFFF;
+  --text:          #1a1a2e;
+  --text-sub:      #6066a0;
+  --success:       #22C55E;
+  --danger:        #EF4444;
+  --shadow:        0 12px 40px rgba(108,99,255,0.13);
+  --radius:        24px;
+  --font:          'Segoe UI', system-ui, -apple-system, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 16px; -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg-gradient);
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  color: var(--text);
+}
+
+/* ============================================================
+   ANIMATED BACKGROUND BLOBS
+   ============================================================ */
+.page-bg {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.page-bg::before,
+.page-bg::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.35;
+  animation: blob-drift 12s ease-in-out infinite alternate;
+}
+.page-bg::before {
+  width: 420px; height: 420px;
+  background: radial-gradient(circle, #b3aaff, #7c74e8);
+  top: -100px; left: -80px;
+}
+.page-bg::after {
+  width: 320px; height: 320px;
+  background: radial-gradient(circle, #a7f3d0, #34d399);
+  bottom: -80px; right: -60px;
+  animation-delay: -6s;
+}
+@keyframes blob-drift {
+  from { transform: translate(0, 0) scale(1); }
+  to   { transform: translate(40px, 30px) scale(1.08); }
+}
+
+/* ============================================================
+   CARD
+   ============================================================ */
+.card-wrap {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 440px;
+}
+
+.card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  padding: 2.5rem 2rem 2rem;
+  box-shadow: var(--shadow);
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* ============================================================
+   SCREENS
+   ============================================================ */
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  text-align: center;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.screen.active {
+  display: flex;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ============================================================
+   LOADING
+   ============================================================ */
+.loader-ring {
+  width: 52px; height: 52px;
+  border: 4px solid var(--accent-light);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text { color: var(--text-sub); font-size: 0.95rem; }
+
+/* ============================================================
+   CLIENT HEADER
+   ============================================================ */
+.client-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.client-logo {
+  width: 72px;
+  height: 72px;
+  object-fit: contain;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  background: #f5f5ff;
+  padding: 6px;
+}
+
+.client-name {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+/* ============================================================
+   HEADINGS & TEXT
+   ============================================================ */
+h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text);
+}
+
+.subtitle {
+  font-size: 0.95rem;
+  color: var(--text-sub);
+  line-height: 1.55;
+  max-width: 320px;
+}
+
+.rating-question {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.closing-msg {
+  font-size: 1rem;
+  color: var(--text-sub);
+  margin-top: -0.25rem;
+}
+
+/* ============================================================
+   EMOJI DISPLAY
+   ============================================================ */
+.emoji-display {
+  font-size: 4.5rem;
+  line-height: 1;
+  display: block;
+  user-select: none;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
+}
+.emoji-display.pop {
+  transform: scale(1.25);
+}
+
+/* ============================================================
+   STARS
+   ============================================================ */
+.stars-container {
+  display: flex;
+  gap: 0.3rem;
+  justify-content: center;
+  padding: 0.25rem 0;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 3.5rem;
+  line-height: 1;
+  padding: 0.15rem 0.1rem;
+  color: var(--star-off);
+  transition: color 0.15s ease, transform 0.15s cubic-bezier(0.34,1.56,0.64,1);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+.star-btn.lit     { color: var(--star-on); }
+.star-btn.hovered { color: var(--star-hover); transform: scale(1.18); }
+.star-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+
+.rating-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--accent);
+  min-height: 1.4em;
+  transition: opacity 0.2s;
+}
+
+/* ============================================================
+   REVIEW TEXTAREA (positive-write)
+   ============================================================ */
+.review-text-wrap {
+  width: 100%;
+  text-align: left;
+}
+
+.review-label {
+  display: block;
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  margin-bottom: 0.4rem;
+  font-weight: 500;
+}
+
+.textarea-shell {
+  position: relative;
+}
+
+.review-textarea {
+  width: 100%;
+  border: 2px solid #e5e7ff;
+  border-radius: 14px;
+  padding: 0.75rem 2.8rem 0.75rem 0.85rem;
+  font-size: 0.92rem;
+  font-family: var(--font);
+  color: var(--text);
+  resize: none;
+  line-height: 1.5;
+  transition: border-color 0.2s;
+  background: #fafbff;
+}
+.review-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+}
+
+.ai-badge {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  font-size: 0.7rem;
+  background: linear-gradient(135deg, #6C63FF, #a78bfa);
+  color: white;
+  padding: 2px 7px;
+  border-radius: 20px;
+  white-space: nowrap;
+  font-weight: 600;
+  pointer-events: none;
+}
+
+/* ============================================================
+   PHOTO UPLOAD
+   ============================================================ */
+.photo-upload-wrap {
+  width: 100%;
+  text-align: left;
+}
+
+.photo-label {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: var(--accent);
+  font-weight: 600;
+  padding: 0.5rem 0;
+  user-select: none;
+}
+.photo-label:hover { text-decoration: underline; }
+
+.photo-input {
+  display: none;
+}
+
+.photo-preview {
+  position: relative;
+  display: inline-block;
+  margin-top: 0.4rem;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+.photo-preview img {
+  display: block;
+  max-width: 180px;
+  max-height: 140px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+.photo-remove {
+  position: absolute;
+  top: 4px; right: 4px;
+  background: rgba(0,0,0,0.55);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 22px; height: 22px;
+  font-size: 0.7rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+.photo-remove:hover { background: rgba(0,0,0,0.8); }
+
+/* ============================================================
+   INSTRUCTION BOX (positive-open)
+   ============================================================ */
+.instruction-box {
+  background: #f5f5ff;
+  border: 2px solid var(--accent-light);
+  border-radius: 16px;
+  padding: 1.1rem 1.3rem;
+  line-height: 1.65;
+  font-size: 0.95rem;
+  text-align: left;
+  width: 100%;
+}
+.instruction-box strong { color: var(--text); }
+.instruction-hint {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+  margin-top: 0.3rem;
+}
+
+/* ============================================================
+   FORM FIELDS (negative)
+   ============================================================ */
+.field-group {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.field-group label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.field-group input,
+.field-group textarea {
+  width: 100%;
+  border: 2px solid #e5e7ff;
+  border-radius: 12px;
+  padding: 0.7rem 0.85rem;
+  font-size: 0.92rem;
+  font-family: var(--font);
+  color: var(--text);
+  transition: border-color 0.2s, background 0.2s;
+  background: #fafbff;
+  resize: none;
+}
+.field-group input:focus,
+.field-group textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: #fff;
+}
+.field-group input.invalid,
+.field-group textarea.invalid {
+  border-color: var(--danger);
+}
+
+#feedback-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.form-error {
+  background: #fff0f0;
+  color: var(--danger);
+  border: 1px solid #fcc;
+  border-radius: 10px;
+  padding: 0.6rem 0.9rem;
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+/* ============================================================
+   COUPON / INCENTIVE
+   ============================================================ */
+.coupon-box {
+  width: 100%;
+  border: 2.5px dashed var(--accent);
+  border-radius: 20px;
+  padding: 1.5rem 1rem;
+  background: var(--accent-light);
+  position: relative;
+  overflow: hidden;
+}
+.coupon-box::before,
+.coupon-box::after {
+  content: '';
+  position: absolute;
+  width: 24px; height: 24px;
+  background: #fff;
+  border-radius: 50%;
+  top: 50%; transform: translateY(-50%);
+}
+.coupon-box::before { left: -12px; }
+.coupon-box::after  { right: -12px; }
+
+.coupon-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.incentive-logo {
+  width: 52px; height: 52px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: white;
+  padding: 4px;
+}
+
+.incentive-text {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+}
+
+.incentive-hint {
+  font-size: 0.8rem;
+  color: var(--text-sub);
+}
+
+/* ============================================================
+   BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  width: 100%;
+  max-width: 320px;
+  padding: 0.9rem 1.5rem;
+  border-radius: 50px;
+  font-size: 0.97rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  font-family: var(--font);
+  letter-spacing: 0.01em;
+  transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+.btn:active   { transform: scale(0.96); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  color: white;
+  box-shadow: 0 6px 20px rgba(108,99,255,0.35);
+}
+.btn-primary:hover:not(:disabled) {
+  box-shadow: 0 8px 26px rgba(108,99,255,0.48);
+  transform: translateY(-1px);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #22C55E, #16A34A);
+  color: white;
+  box-shadow: 0 6px 20px rgba(34,197,94,0.32);
+}
+.btn-success:hover:not(:disabled) { transform: translateY(-1px); }
+
+.btn-outline {
+  background: white;
+  color: var(--accent);
+  border: 2.5px solid var(--accent);
+  box-shadow: none;
+}
+.btn-outline:hover { background: var(--accent-light); }
+
+/* ============================================================
+   SKIP LINK
+   ============================================================ */
+.skip-link {
+  font-size: 0.82rem;
+  color: var(--text-sub);
+  text-decoration: none;
+  margin-top: -0.25rem;
+  padding: 0.25rem 0;
+}
+.skip-link:hover { color: var(--accent); text-decoration: underline; }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+@keyframes pop-in {
+  0%   { transform: scale(0.3); opacity: 0; }
+  70%  { transform: scale(1.2); }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes bounce-y {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-14px); }
+}
+
+.animated-pop    { animation: pop-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both; }
+.animated-bounce { animation: bounce-y 1.4s ease-in-out infinite; }
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 400px) {
+  .card { padding: 2rem 1.3rem 1.75rem; }
+  .star-btn { font-size: 2.9rem; }
+  h2 { font-size: 1.3rem; }
+  .emoji-display { font-size: 3.8rem; }
+}
+
+@media (min-height: 700px) {
+  .card { padding: 3rem 2.25rem 2.25rem; }
+}
