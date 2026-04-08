@@ -435,13 +435,12 @@ document.addEventListener('DOMContentLoaded', () => {
     await submitFeedback();
   });
 
-  // Listeners de foto
-  document.getElementById('photo-input-pos').addEventListener('change', (e) => {
-    handlePhotoSelect(e, 'pos');
-  });
-  document.getElementById('photo-input-neg').addEventListener('change', (e) => {
-    handlePhotoSelect(e, 'neg');
-  });
+  // Listeners de foto (solo si existen en el DOM)
+  const photoPosInput = document.getElementById('photo-input-pos');
+  if (photoPosInput) photoPosInput.addEventListener('change', (e) => handlePhotoSelect(e, 'pos'));
+
+  const photoNegInput = document.getElementById('photo-input-neg');
+  if (photoNegInput) photoNegInput.addEventListener('change', (e) => handlePhotoSelect(e, 'neg'));
 
   init();
 });
