@@ -175,9 +175,10 @@ function applyBranding(client) {
   const logo = document.getElementById('client-logo');
   const name = document.getElementById('client-name');
   if (client.logoUrl) {
-    logo.src = client.logoUrl;
-    logo.alt = client.businessName || '';
+    logo.src   = client.logoUrl;
+    logo.alt   = client.businessName || '';
     logo.style.display = 'block';
+    logo.onerror = () => { logo.style.display = 'none'; };
   } else {
     logo.style.display = 'none';
   }
@@ -186,9 +187,10 @@ function applyBranding(client) {
   // Logo en pantalla incentivo
   const incentiveLogo = document.getElementById('incentive-logo');
   if (client.logoUrl) {
-    incentiveLogo.src  = client.logoUrl;
-    incentiveLogo.alt  = client.businessName || '';
+    incentiveLogo.src   = client.logoUrl;
+    incentiveLogo.alt   = client.businessName || '';
     incentiveLogo.style.display = 'block';
+    incentiveLogo.onerror = () => { incentiveLogo.style.display = 'none'; };
   } else {
     incentiveLogo.style.display = 'none';
   }
@@ -274,15 +276,48 @@ function buildStars() {
     btn.setAttribute('aria-label', `${i} estrellas`);
     btn.setAttribute('type', 'button');
 
+    // Mouse (desktop)
     btn.addEventListener('mouseenter', () => updateHover(i));
     btn.addEventListener('mouseleave', () => resetHover());
     btn.addEventListener('click',      () => selectRating(i));
-    // Touch
-    btn.addEventListener('touchstart', () => updateHover(i), { passive: true });
-    btn.addEventListener('touchend',   () => selectRating(i), { passive: true });
 
     container.appendChild(btn);
   }
+
+  // Touch: manejo a nivel de contenedor para permitir deslizar entre estrellas
+  let touchActive = false;
+  container.addEventListener('touchstart', (e) => {
+    e.preventDefault();
+    touchActive = true;
+    const star = getStarAtPoint(e.touches[0].clientX, e.touches[0].clientY);
+    if (star) updateHover(star);
+  }, { passive: false });
+
+  container.addEventListener('touchmove', (e) => {
+    if (!touchActive) return;
+    e.preventDefault();
+    const star = getStarAtPoint(e.touches[0].clientX, e.touches[0].clientY);
+    if (star) updateHover(star);
+  }, { passive: false });
+
+  container.addEventListener('touchend', (e) => {
+    e.preventDefault();
+    touchActive = false;
+    const star = getStarAtPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY)
+                 || state.hoveredRating;
+    if (star) selectRating(star);
+  }, { passive: false });
+}
+
+function getStarAtPoint(x, y) {
+  const stars = document.querySelectorAll('.star-btn');
+  for (const star of stars) {
+    const r = star.getBoundingClientRect();
+    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+      return parseInt(star.getAttribute('data-value'));
+    }
+  }
+  return null;
 }
 
 function updateHover(val) {
@@ -381,11 +416,18 @@ async function generateAIText() {
       reviewText = data.suggestedReviewAI || data.suggestedReviewText || '';
     }
 
+    // Último fallback: texto estático guardado en state al cargar la config
+    if (!reviewText) {
+      reviewText = (state.client && state.client.suggestedReviewText) || '';
+    }
+
     document.getElementById('review-text').value = reviewText;
     document.getElementById('ai-badge').style.display = reviewText ? 'flex' : 'none';
-  } catch {
-    // Si falla, texto vacío para que el cliente escriba
-    document.getElementById('review-text').value = '';
+  } catch (err) {
+    console.warn('generateAIText error:', err);
+    // Si falla la red, usar el texto de fallback de Airtable
+    const fallback = (state.client && state.client.suggestedReviewText) || '';
+    document.getElementById('review-text').value = fallback;
     document.getElementById('ai-badge').style.display = 'none';
   }
 
