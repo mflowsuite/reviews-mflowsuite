@@ -2,8 +2,8 @@
    CONFIGURACIÓN — edita estas URLs cuando tengas n8n listo
    ============================================================ */
 const CONFIG = {
-  N8N_CONFIG_URL:   'https://TU-N8N.com/webhook/get-client-config',
-  N8N_FEEDBACK_URL: 'https://TU-N8N.com/webhook/save-feedback',
+  N8N_CONFIG_URL:   'https://fluky-n8n.lembgk.easypanel.host/webhook/get-client-config',
+  N8N_FEEDBACK_URL: 'https://fluky-n8n.lembgk.easypanel.host/webhook/save-feedback',
   POSITIVE_MIN:     4,   // 4+ estrellas = flujo positivo
   PHOTO_MAX_PX:     1200, // máximo px para comprimir imagen
   PHOTO_QUALITY:    0.75, // calidad JPEG (0-1)
