@@ -118,7 +118,7 @@ const EMOJI_MAP   = { 0:'😐', 1:'😢', 2:'😞', 3:'😕', 4:'😊', 5:'🤩'
    ============================================================ */
 async function init() {
   const params   = new URLSearchParams(window.location.search);
-  state.clientId = params.get('c') || params.get('client');
+  state.clientId = params.get('clientId') || params.get('c') || params.get('client');
 
   if (!state.clientId) {
     showScreen('error');
