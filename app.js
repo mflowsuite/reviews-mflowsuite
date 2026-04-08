@@ -119,6 +119,7 @@ const EMOJI_MAP   = { 0:'😐', 1:'😢', 2:'😞', 3:'😕', 4:'😊', 5:'🤩'
 async function init() {
   const params   = new URLSearchParams(window.location.search);
   state.clientId = params.get('clientId') || params.get('c') || params.get('client');
+  state.testMode = params.get('test') === 'true';
 
   if (!state.clientId) {
     showScreen('error');
@@ -433,6 +434,18 @@ async function submitFeedback() {
     timestamp:  new Date().toISOString(),
     userAgent:  navigator.userAgent,
   };
+
+  // Modo test: simula el envío sin guardar nada
+  if (state.testMode) {
+    console.log('[TEST MODE] Payload que se enviaría:', payload);
+    btn.disabled    = false;
+    btn.textContent = t.submitBtn;
+    showScreen('thankyou-negative');
+    if (state.client && (state.client.incentiveEnabled === true || state.client.incentiveEnabled === 'TRUE')) {
+      setTimeout(() => showScreen('incentive'), 2800);
+    }
+    return;
+  }
 
   try {
     const res = await fetch(CONFIG.N8N_FEEDBACK_URL, {
