@@ -46,33 +46,36 @@
       <!-- SCREEN: positive-write (pantalla intermedia antes de Google) -->
       <div id="screen-positive-write" class="screen">
         <span class="emoji-display animated-pop" aria-hidden="true">🎉</span>
-        <h2 id="pw-headline">¡Qué alegría saberlo!</h2>
-        <p class="subtitle" id="pw-subtitle">¿Nos regalas un minuto en Google? Tu opinión ayuda a muchas personas.</p>
+        <h2 id="pw-headline">Que alegria saberlo!</h2>
+        <p class="subtitle" id="pw-subtitle">Tu opinion en Google ayuda a que mas personas nos encuentren.</p>
 
-        <div class="review-text-wrap">
-          <label for="review-text" class="review-label" id="pw-label">Aquí tienes un texto para tu reseña — puedes editarlo:</label>
+        <!-- Estado: sin texto aun -->
+        <div id="pw-no-text">
+          <button class="btn btn-ai" id="ai-generate-btn" onclick="generateAIText()">
+            ✨ Ayudame con el texto
+          </button>
+          <button class="btn btn-primary" id="go-google-direct-btn" onclick="openGoogleDirect()">
+            Ir a Google Reviews →
+          </button>
+        </div>
+
+        <!-- Estado: texto generado (oculto hasta que IA responda) -->
+        <div id="pw-with-text" style="display:none">
           <div class="textarea-shell">
             <textarea id="review-text" class="review-textarea" rows="4" placeholder="Escribe tu experiencia..."></textarea>
             <span class="ai-badge" id="ai-badge" title="Generado con IA">✨ IA</span>
           </div>
+          <button class="btn btn-primary" id="copy-open-btn" onclick="handleCopyAndOpen()">
+            📋 Copiar y abrir Google
+          </button>
+          <a href="#" class="skip-link" onclick="openGoogleDirect(); return false;">Ir sin texto</a>
         </div>
 
-        <!-- Campo foto (aparece si photoUploadEnabled=TRUE) -->
-        <div id="photo-upload-wrap-pos" class="photo-upload-wrap" style="display:none">
-          <label class="photo-label" id="pw-photo-label">
-            <span id="pw-photo-text">📷 Añadir foto (opcional)</span>
-            <input type="file" id="photo-input-pos" accept="image/*" class="photo-input" />
-          </label>
-          <div id="photo-preview-pos" class="photo-preview" style="display:none">
-            <img id="photo-img-pos" src="" alt="Vista previa" />
-            <button class="photo-remove" onclick="removePhoto('pos')" aria-label="Eliminar foto">✕</button>
-          </div>
+        <!-- Estado: cargando IA -->
+        <div id="pw-loading-ai" style="display:none">
+          <div class="loader-ring"></div>
+          <p class="loading-text">Generando texto...</p>
         </div>
-
-        <button class="btn btn-primary" id="copy-open-btn" onclick="handleCopyAndOpen()">
-          <span>📋</span> Copiar y abrir Google
-        </button>
-        <a href="#" class="skip-link" onclick="showThankyouPositive(); return false;">Prefiero no hacerlo ahora</a>
       </div>
 
       <!-- SCREEN: positive-open (instrucción para pegar en Google) -->
@@ -106,23 +109,23 @@
 
         <form id="feedback-form" novalidate>
           <div class="field-group">
-            <label for="field-name" id="label-name">Tu nombre</label>
+            <label for="field-comment" id="label-comment">Que podriamos mejorar?</label>
+            <textarea id="field-comment" name="comment" rows="4"
+                      placeholder="Cuentanos tu experiencia con confianza, leemos todo..." required></textarea>
+          </div>
+
+          <div class="field-group">
+            <label for="field-name" id="label-name">Tu nombre <span class="optional-tag">(opcional)</span></label>
             <input type="text" id="field-name" name="name"
                    autocomplete="given-name"
-                   placeholder="¿Cómo te llamas?" required />
+                   placeholder="Como te llamas?" />
           </div>
 
           <div class="field-group">
-            <label for="field-contact" id="label-contact">WhatsApp o email</label>
+            <label for="field-contact" id="label-contact">WhatsApp o email <span class="optional-tag">(opcional)</span></label>
             <input type="text" id="field-contact" name="contact"
                    autocomplete="email"
-                   placeholder="Para que podamos contactarte" required />
-          </div>
-
-          <div class="field-group">
-            <label for="field-comment" id="label-comment">¿Qué podríamos mejorar?</label>
-            <textarea id="field-comment" name="comment" rows="3"
-                      placeholder="Cuéntanos tu experiencia con confianza, leemos todo..." required></textarea>
+                   placeholder="Para que podamos contactarte" />
           </div>
 
           <!-- Campo foto negativo (aparece si photoUploadEnabled=TRUE) -->

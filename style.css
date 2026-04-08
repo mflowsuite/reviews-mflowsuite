@@ -521,6 +521,27 @@ h2 {
 }
 .btn-outline:hover { background: var(--accent-light); }
 
+.btn-ai {
+  background: linear-gradient(135deg, #7C3AED, #4F46E5);
+  color: white;
+  box-shadow: 0 6px 20px rgba(124,58,237,0.35);
+}
+.btn-ai:hover:not(:disabled) {
+  box-shadow: 0 8px 26px rgba(124,58,237,0.48);
+  transform: translateY(-1px);
+}
+
+.optional-tag {
+  font-size: 0.75rem;
+  color: var(--text-sub);
+  font-weight: 400;
+  margin-left: 4px;
+}
+
+#pw-no-text { display: flex; flex-direction: column; gap: 0.75rem; width: 100%; }
+#pw-with-text { flex-direction: column; gap: 1rem; width: 100%; }
+#pw-loading-ai { flex-direction: column; align-items: center; gap: 0.75rem; }
+
 /* ============================================================
    SKIP LINK
    ============================================================ */

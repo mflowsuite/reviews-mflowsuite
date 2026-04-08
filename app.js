@@ -336,10 +336,49 @@ function showScreen(id) {
 /* ============================================================
    FLUJO POSITIVO
    ============================================================ */
+
+// Ir a Google directo sin texto
+function openGoogleDirect() {
+  const url = state.client && state.client.googleReviewUrl;
+  if (url) window.open(url, '_blank', 'noopener,noreferrer');
+  showScreen('positive-open');
+}
+
+// Botón "Ayudame con el texto" — llama a n8n en ese momento
+async function generateAIText() {
+  const btn = document.getElementById('ai-generate-btn');
+  document.getElementById('pw-no-text').style.display    = 'none';
+  document.getElementById('pw-loading-ai').style.display = 'flex';
+
+  try {
+    // Reutiliza el config ya cargado o pide uno fresco
+    let reviewText = state.client && state.client.suggestedReviewAI;
+
+    if (!reviewText) {
+      // Si la IA no vino precargada, pide al webhook
+      const res = await fetch(
+        `${CONFIG.N8N_CONFIG_URL}?clientId=${encodeURIComponent(state.clientId)}`
+      );
+      const data = await res.json();
+      reviewText = data.suggestedReviewAI || data.suggestedReviewText || '';
+    }
+
+    document.getElementById('review-text').value = reviewText;
+    document.getElementById('ai-badge').style.display = reviewText ? 'flex' : 'none';
+  } catch {
+    // Si falla, texto vacío para que el cliente escriba
+    document.getElementById('review-text').value = '';
+    document.getElementById('ai-badge').style.display = 'none';
+  }
+
+  document.getElementById('pw-loading-ai').style.display = 'none';
+  document.getElementById('pw-with-text').style.display  = 'flex';
+}
+
 async function handleCopyAndOpen() {
   const text = document.getElementById('review-text').value.trim() ||
                (state.client && state.client.suggestedReviewText) ||
-               '¡Excelente experiencia, muy recomendable!';
+               'Muy buena experiencia, lo recomiendo !!';
 
   // Copiar al portapapeles
   try {
@@ -408,10 +447,8 @@ async function submitFeedback() {
     document.getElementById(id).classList.remove('invalid');
   });
 
-  // Validación
+  // Validación — solo comentario es obligatorio, nombre y contacto opcionales
   let hasError = false;
-  if (!name)    { document.getElementById('field-name').classList.add('invalid');    hasError = true; }
-  if (!contact) { document.getElementById('field-contact').classList.add('invalid'); hasError = true; }
   if (!comment) { document.getElementById('field-comment').classList.add('invalid'); hasError = true; }
 
   if (hasError) {
