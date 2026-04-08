@@ -127,9 +127,15 @@ async function init() {
   }
 
   try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000); // 8s max
+
     const res = await fetch(
-      `${CONFIG.N8N_CONFIG_URL}?clientId=${encodeURIComponent(state.clientId)}`
+      `${CONFIG.N8N_CONFIG_URL}?clientId=${encodeURIComponent(state.clientId)}`,
+      { signal: controller.signal }
     );
+    clearTimeout(timeout);
+
     if (!res.ok) throw new Error('not found');
     const data = await res.json();
     if (data.error) throw new Error(data.error);
@@ -141,7 +147,15 @@ async function init() {
     showScreen('rating');
   } catch (err) {
     console.warn('Config fetch failed:', err);
-    showScreen('error');
+    // Si es timeout, mostrar igual con datos mínimos para no perder al cliente
+    if (err.name === 'AbortError') {
+      state.client = { clientId: state.clientId, language: 'es-ES' };
+      buildStars();
+      applyTranslations('es-ES');
+      showScreen('rating');
+    } else {
+      showScreen('error');
+    }
   }
 }
 
