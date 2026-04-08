@@ -230,7 +230,8 @@ function applyTranslations(lang) {
   // Foto upload visibilidad
   const photoEnabled = state.client &&
     (state.client.photoUploadEnabled === true || state.client.photoUploadEnabled === 'TRUE');
-  document.getElementById('photo-upload-wrap-pos').style.display = photoEnabled ? 'block' : 'none';
+  // Foto solo en flujo negativo (en positivo no tiene sentido, no llega a Google)
+  document.getElementById('photo-upload-wrap-pos').style.display = 'none';
   document.getElementById('photo-upload-wrap-neg').style.display = photoEnabled ? 'block' : 'none';
 
   // Texto sugerido con IA o fallback
@@ -441,9 +442,7 @@ async function submitFeedback() {
     btn.disabled    = false;
     btn.textContent = t.submitBtn;
     showScreen('thankyou-negative');
-    if (state.client && (state.client.incentiveEnabled === true || state.client.incentiveEnabled === 'TRUE')) {
-      setTimeout(() => showScreen('incentive'), 2800);
-    }
+    // Sin incentivo en flujo negativo
     return;
   }
 
@@ -455,10 +454,7 @@ async function submitFeedback() {
     });
     if (!res.ok) throw new Error('server error');
     showScreen('thankyou-negative');
-    // Mostrar incentivo si está habilitado
-    if (state.client && (state.client.incentiveEnabled === true || state.client.incentiveEnabled === 'TRUE')) {
-      setTimeout(() => showScreen('incentive'), 2800);
-    }
+    // Sin incentivo en flujo negativo — el regalo es solo para quienes dejan reseña positiva en Google
   } catch {
     btn.disabled    = false;
     btn.textContent = t.submitBtn;
