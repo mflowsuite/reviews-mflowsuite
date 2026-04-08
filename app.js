@@ -175,10 +175,10 @@ function applyBranding(client) {
   const logo = document.getElementById('client-logo');
   const name = document.getElementById('client-name');
   if (client.logoUrl) {
+    logo.onerror = () => { logo.style.display = 'none'; }; // asignar ANTES de src
     logo.src   = client.logoUrl;
     logo.alt   = client.businessName || '';
     logo.style.display = 'block';
-    logo.onerror = () => { logo.style.display = 'none'; };
   } else {
     logo.style.display = 'none';
   }
@@ -440,6 +440,10 @@ async function handleCopyAndOpen() {
                (state.client && state.client.suggestedReviewText) ||
                'Muy buena experiencia, lo recomiendo !!';
 
+  // Abrir Google PRIMERO (antes de cualquier await — móvil Safari bloquea popups post-await)
+  const url = state.client && state.client.googleReviewUrl;
+  if (url) window.open(url, '_blank');
+
   // Copiar al portapapeles
   try {
     await navigator.clipboard.writeText(text);
@@ -455,19 +459,14 @@ async function handleCopyAndOpen() {
     document.body.removeChild(ta);
   }
 
-  // Abrir Google Reviews en nueva pestaña
-  const url = state.client && state.client.googleReviewUrl;
-  if (url) {
-    window.open(url, '_blank', 'noopener,noreferrer');
-  }
-
   showScreen('positive-open');
 }
 
 function showThankyouPositive() {
   showScreen('thankyou-positive');
-  // Mostrar incentivo después si está habilitado
-  if (state.client && (state.client.incentiveEnabled === true || state.client.incentiveEnabled === 'TRUE')) {
+  // Mostrar incentivo después si está habilitado (acepta boolean true o string 'true'/'TRUE')
+  const inc = state.client && state.client.incentiveEnabled;
+  if (inc === true || (typeof inc === 'string' && inc.toLowerCase() === 'true')) {
     setTimeout(() => showScreen('incentive'), 2800);
   }
 }
