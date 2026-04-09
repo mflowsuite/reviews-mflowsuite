@@ -378,8 +378,8 @@ function showScreen(id) {
 // Ir a Google directo sin texto
 function openGoogleDirect() {
   const url = state.client && state.client.googleReviewUrl;
-  if (url) window.open(url, '_blank', 'noopener,noreferrer');
-  showScreen('positive-open');
+  if (url) window.open(url, '_blank');
+  showThankyouPositive();
 }
 
 // Botón "Ayudame con el texto" — llama a n8n en ese momento
@@ -433,18 +433,16 @@ async function handleCopyAndOpen() {
   try {
     await navigator.clipboard.writeText(text);
   } catch {
-    // Fallback para navegadores sin clipboard API
     const ta = document.createElement('textarea');
-    ta.value = text;
-    ta.style.position = 'fixed';
-    ta.style.opacity  = '0';
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
   }
 
-  showScreen('positive-open');
+  // Feedback visual en el botón, luego directo a gracias + incentivo
+  const btn = document.getElementById('copy-open-btn');
+  if (btn) { btn.textContent = '✓ Texto copiado!'; btn.disabled = true; }
+  setTimeout(() => showThankyouPositive(), 1500);
 }
 
 function showThankyouPositive() {
