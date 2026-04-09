@@ -25,11 +25,16 @@ function qrBuildUrl(slug, dark) {
 
 function openQR(slug, name) {
   qr.slug = slug; qr.name = name; qr.dark = false;
-  document.getElementById('qr-modal').style.display     = 'flex';
-  document.getElementById('qr-modal-inner').style.background = '#fff';
-  document.getElementById('qr-title').textContent       = name;
-  document.getElementById('qr-img').src                 = qrBuildUrl(slug, false);
-  document.getElementById('qr-mode-btn').textContent    = '🌙 Modo noche';
+  const inner = document.getElementById('qr-modal-inner');
+  document.getElementById('qr-modal').style.display = 'flex';
+  inner.style.background = '#fff';
+  inner.style.color      = '';
+  inner.querySelectorAll('.btn-outline').forEach(btn => {
+    btn.style.color = ''; btn.style.borderColor = '';
+  });
+  document.getElementById('qr-title').textContent    = name;
+  document.getElementById('qr-img').src              = qrBuildUrl(slug, false);
+  document.getElementById('qr-mode-btn').textContent = '🌙 Modo noche';
 }
 
 function closeQR(e) {
@@ -43,6 +48,10 @@ function toggleQRMode() {
   const inner = document.getElementById('qr-modal-inner');
   inner.style.background = qr.dark ? '#1a1a2e' : '#fff';
   inner.style.color      = qr.dark ? '#fff' : 'var(--text)';
+  inner.querySelectorAll('.btn-outline').forEach(btn => {
+    btn.style.color       = qr.dark ? '#fff' : '';
+    btn.style.borderColor = qr.dark ? 'rgba(255,255,255,0.35)' : '';
+  });
   document.getElementById('qr-img').src              = qrBuildUrl(qr.slug, qr.dark);
   document.getElementById('qr-mode-btn').textContent = qr.dark ? '☀️ Modo día' : '🌙 Modo noche';
 }
