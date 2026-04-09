@@ -323,18 +323,21 @@ function renderStars(filled) {
   });
 }
 
+let _ratingTimer = null;
 function selectRating(val) {
   state.selectedRating = val;
   renderStars(val);
-  setTimeout(() => {
+  // Debounce: si el usuario toca otra estrella antes de 700ms, reinicia el timer
+  if (_ratingTimer) clearTimeout(_ratingTimer);
+  _ratingTimer = setTimeout(() => {
+    _ratingTimer = null;
     if (val >= CONFIG.POSITIVE_MIN) {
       showScreen('positive-write');
     } else {
       showScreen('negative');
-      const emojiNeg = document.getElementById('neg-emoji');
-      emojiNeg.textContent = EMOJI_MAP[val];
+      document.getElementById('neg-emoji').textContent = EMOJI_MAP[val];
     }
-  }, 320);
+  }, 700);
 }
 
 /* ============================================================
