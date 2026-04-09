@@ -143,6 +143,7 @@ async function init() {
     state.client = data;
     applyBranding(data);
     buildStars();
+    selectRating(5); // precargar 5 estrellas
     applyTranslations(data.language || 'es-ES');
     showScreen('rating');
   } catch (err) {
@@ -151,6 +152,7 @@ async function init() {
     if (err.name === 'AbortError') {
       state.client = { clientId: state.clientId, language: 'es-ES' };
       buildStars();
+      selectRating(5); // precargar 5 estrellas
       applyTranslations('es-ES');
       showScreen('rating');
     } else {
