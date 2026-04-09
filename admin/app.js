@@ -321,14 +321,26 @@ function openForm(recordId) {
   document.getElementById('form-alert').style.display = 'none';
   document.getElementById('save-status').textContent  = '';
 
+  const clientIdEl = document.getElementById('f-clientId');
+
   if (recordId) {
     const rec = state.clients.find(r => r.id === recordId);
     if (!rec) return;
     populateForm(rec.fields);
     document.getElementById('form-title').textContent = rec.fields.businessName || 'Editar cliente';
+    // Bloquear clientId: es inmutable una vez creado
+    clientIdEl.readOnly = true;
+    clientIdEl.style.background = '#f3f4f6';
+    clientIdEl.style.cursor     = 'not-allowed';
+    clientIdEl.title = 'El Client ID no se puede cambiar — está en uso por URLs y QR codes';
   } else {
     clearForm();
     document.getElementById('form-title').textContent = 'Nuevo cliente';
+    // Habilitar clientId para nuevos clientes
+    clientIdEl.readOnly = false;
+    clientIdEl.style.background = '';
+    clientIdEl.style.cursor     = '';
+    clientIdEl.title = '';
   }
 
   showScreen('form');
