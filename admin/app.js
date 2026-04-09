@@ -2,7 +2,8 @@
 //  ⚙️  CONFIGURACIÓN — cambiá solo este bloque
 // ══════════════════════════════════════════════════════════
 const ADMIN_CONFIG = {
-  n8nWebhook: 'https://fluky-n8n.lembgk.easypanel.host/webhook/admin-clients',
+  n8nWebhook:    'https://fluky-n8n.lembgk.easypanel.host/webhook/admin-clients',
+  uploadWebhook: 'https://fluky-n8n.lembgk.easypanel.host/webhook/upload-logo',
 };
 // ══════════════════════════════════════════════════════════
 
@@ -92,6 +93,91 @@ function printQR() {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════
+//  UPLOAD LOGO
+// ══════════════════════════════════════════════════════════
+async function uploadLogo(inputEl) {
+  const file = inputEl.files[0];
+  if (!file) return;
+
+  const statusEl = document.getElementById('logo-upload-status');
+  statusEl.textContent = '⏳ Subiendo…';
+  statusEl.style.color = 'var(--muted)';
+
+  // Redimensionar si es muy grande (max 800px)
+  let base64;
+  try {
+    base64 = await resizeAndEncode(file, 800);
+  } catch {
+    base64 = await fileToBase64(file);
+  }
+
+  try {
+    const res  = await fetch(ADMIN_CONFIG.uploadWebhook, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ key: state.password, fileData: base64, filename: file.name }),
+    });
+    const data = await res.json();
+    if (data.error) throw new Error(data.error);
+
+    // Auto-rellenar el campo URL
+    document.getElementById('f-logoUrl').value = data.url;
+    statusEl.textContent = '✅ Logo subido';
+    statusEl.style.color = 'var(--success)';
+    // Preview
+    const preview = document.getElementById('logo-preview');
+    if (preview) { preview.src = data.url; preview.style.display = 'block'; }
+  } catch (e) {
+    statusEl.textContent = `❌ Error: ${e.message}`;
+    statusEl.style.color = 'var(--danger)';
+  }
+
+  inputEl.value = ''; // reset input
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload  = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function updateLogoPreview(url) {
+  const preview = document.getElementById('logo-preview');
+  if (!preview) return;
+  if (url && url.startsWith('http')) {
+    preview.src = url;
+    preview.style.display = 'block';
+    preview.onerror = () => { preview.style.display = 'none'; };
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+function resizeAndEncode(file, maxPx) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let w = img.width, h = img.height;
+      if (w > maxPx || h > maxPx) {
+        if (w > h) { h = Math.round(h * maxPx / w); w = maxPx; }
+        else       { w = Math.round(w * maxPx / h); h = maxPx; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL(file.type || 'image/png'));
+    };
+    img.onerror = reject;
+    img.src = url;
+  });
 }
 
 // ══════════════════════════════════════════════════════════
@@ -269,6 +355,7 @@ function populateForm(f) {
   set('f-industry',           f.industry           || '');
   set('f-language',           f.language           || 'es-ES');
   set('f-logoUrl',            f.logoUrl            || '');
+  updateLogoPreview(f.logoUrl || '');
   set('f-googleReviewUrl',    f.googleReviewUrl    || '');
   set('f-photoPromptText',    f.photoPromptText    || '');
   set('f-incentiveText',      f.incentiveText      || '');

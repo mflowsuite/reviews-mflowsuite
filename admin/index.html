@@ -228,9 +228,19 @@
       <div class="form-section">
         <h3>🖼️ Logo & Links</h3>
         <div class="field">
-          <label>URL del logo</label>
-          <input type="url" id="f-logoUrl" placeholder="https://reviews.mflowsuite.com/assets/logo.png" />
-          <p class="hint">Recomendado: subir en <code>assets/</code> del repo de GitHub y usar la URL pública.</p>
+          <label>Logo</label>
+          <!-- Opción A: subir archivo -->
+          <div style="display:flex;align-items:center;gap:0.75rem;margin-bottom:0.6rem;flex-wrap:wrap">
+            <label class="btn btn-outline btn-sm" style="cursor:pointer;margin:0">
+              📁 Subir archivo
+              <input type="file" accept="image/*" style="display:none" onchange="uploadLogo(this)" />
+            </label>
+            <span id="logo-upload-status" style="font-size:0.82rem;color:var(--muted)"></span>
+            <img id="logo-preview" src="" alt="" style="display:none;width:40px;height:40px;object-fit:contain;border-radius:6px;border:1px solid var(--border)" />
+          </div>
+          <!-- Opción B: URL directa -->
+          <input type="url" id="f-logoUrl" placeholder="https://… o se rellena automáticamente al subir" oninput="updateLogoPreview(this.value)" />
+          <p class="hint">Podés subir el archivo (se guarda en GitHub y genera la URL) o pegar un link directo.</p>
         </div>
         <div class="field">
           <label>URL de Google Reviews</label>
