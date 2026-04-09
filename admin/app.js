@@ -193,14 +193,24 @@ function resizeAndEncode(file, maxPx) {
 //  CALL n8n helper
 // ══════════════════════════════════════════════════════════
 async function callN8n(payload) {
-  const res = await fetch(ADMIN_CONFIG.n8nWebhook, {
-    method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ key: state.password, ...payload }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
-  return data;
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 15000); // 15s timeout
+  try {
+    const res = await fetch(ADMIN_CONFIG.n8nWebhook, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ key: state.password, ...payload }),
+      signal:  controller.signal,
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    return data;
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Tiempo de espera agotado. Verificá tu conexión.');
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -209,6 +219,7 @@ async function callN8n(payload) {
 async function doLogin() {
   const pwd     = document.getElementById('inp-password').value.trim();
   const alertEl = document.getElementById('login-alert');
+  const btn     = document.getElementById('login-btn');
   alertEl.style.display = 'none';
 
   if (!pwd) {
@@ -216,12 +227,14 @@ async function doLogin() {
     return;
   }
 
-  // Validar clave contra n8n (que a su vez llama a Airtable)
+  // Estado de carga
+  btn.disabled    = true;
+  btn.textContent = 'Conectando…';
+
   state.password = pwd;
   try {
     const data = await callN8n({ action: 'list' });
     if (data.error === 'Unauthorized') throw new Error('unauthorized');
-    // Login OK
     sessionStorage.setItem('admin_pwd', pwd);
     state.clients = (data.records || []);
     renderList();
@@ -231,9 +244,11 @@ async function doLogin() {
     if (e.message === 'unauthorized') {
       showLoginError('Clave incorrecta.');
     } else {
-      showLoginError('No se pudo conectar al servidor. Intentá de nuevo.');
+      showLoginError(`Error: ${e.message}`);
       console.error(e);
     }
+    btn.disabled    = false;
+    btn.textContent = 'Entrar →';
   }
 }
 
