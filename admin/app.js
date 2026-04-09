@@ -36,37 +36,33 @@ function showScreen(id) {
 //  LOGIN
 // ══════════════════════════════════════════════════════════
 async function doLogin() {
-  const pwd       = document.getElementById('inp-password').value.trim();
+  const pwd        = document.getElementById('inp-password').value.trim();
   const tokenInput = document.getElementById('inp-token').value.trim();
-  const alertEl   = document.getElementById('login-alert');
-
+  const alertEl    = document.getElementById('login-alert');
   alertEl.style.display = 'none';
 
-  // 1) Verificar clave
   if (pwd !== ADMIN_CONFIG.password) {
     showLoginError('Clave incorrecta.');
     return;
   }
 
-  // 2) Token: usar el del input si se escribió, sino el guardado
   const token = tokenInput || state.token;
   if (!token) {
-    showLoginError('Ingresá tu token de Airtable.');
+    showLoginError('Ingresá tu token de Airtable (solo se pide una vez).');
     return;
   }
 
-  // 3) Validar token contra Airtable
+  // Validar token contra Airtable
   try {
     const res = await fetch(`${AT_URL}?maxRecords=1`, {
       headers: { 'Authorization': `Bearer ${token}` }
     });
     if (!res.ok) throw new Error();
-    // Token válido → guardar y entrar
     state.token = token;
     localStorage.setItem('admin_at', token);
     await loadClients();
   } catch {
-    showLoginError('Token de Airtable inválido. Verificalo en airtable.com → Developer hub → Personal access tokens.');
+    showLoginError('Token de Airtable inválido. Copialo desde airtable.com → Developer hub → Personal access tokens.');
   }
 }
 
@@ -381,7 +377,7 @@ function showFormAlert(msg) {
 //  INICIALIZACIÓN
 // ══════════════════════════════════════════════════════════
 (function init() {
-  // Si ya hay token guardado → ocultar campo token en login
+  // Si ya hay token guardado → ocultar el campo, mostrar el aviso
   if (state.token) {
     document.getElementById('token-wrap').style.display      = 'none';
     document.getElementById('token-saved-row').style.display = 'flex';
