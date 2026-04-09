@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin · Reviews</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --primary: #6C63FF;
+      --primary-dark: #5a52e0;
+      --bg: #f0f2f5;
+      --card: #fff;
+      --text: #1a1a2e;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --radius: 10px;
+    }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; font-size: 15px; }
+
+    /* ── Screens ── */
+    .screen { display: none; }
+    .screen.active { display: block; }
+    #screen-login.active { display: flex; }
+
+    /* ── Login ── */
+    #screen-login { min-height: 100vh; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
+    .login-card { background: var(--card); border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+    .login-logo { font-size: 2rem; margin-bottom: 0.5rem; }
+    .login-card h1 { font-size: 1.5rem; margin-bottom: 0.3rem; }
+    .login-card p  { color: var(--muted); font-size: 0.88rem; margin-bottom: 2rem; }
+
+    /* ── Layout ── */
+    .admin-wrap { display: flex; flex-direction: column; min-height: 100vh; }
+    .topbar { background: var(--card); border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
+    .topbar-title { font-size: 1rem; font-weight: 700; color: var(--primary); }
+    .spacer { flex: 1; }
+    .main { padding: 1.75rem; max-width: 1100px; margin: 0 auto; width: 100%; }
+
+    /* ── Buttons ── */
+    .btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.55rem 1.1rem; border-radius: 8px; border: none; cursor: pointer; font-size: 0.88rem; font-weight: 600; transition: all 0.15s; font-family: inherit; }
+    .btn:hover { filter: brightness(0.92); }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary  { background: var(--primary); color: #fff; }
+    .btn-outline  { background: transparent; border: 1.5px solid var(--border); color: var(--text); }
+    .btn-danger   { background: var(--danger); color: #fff; }
+    .btn-ghost    { background: transparent; color: var(--muted); border: none; }
+    .btn-full     { width: 100%; justify-content: center; padding: 0.8rem; font-size: 1rem; }
+    .btn-sm       { padding: 0.35rem 0.8rem; font-size: 0.8rem; }
+
+    /* ── Form fields ── */
+    .field { margin-bottom: 1.1rem; }
+    .field label { display: block; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.35rem; }
+    .field input, .field textarea, .field select {
+      width: 100%; padding: 0.65rem 0.9rem; border: 1.5px solid var(--border);
+      border-radius: 8px; font-size: 0.93rem; font-family: inherit;
+      background: #fafafa; color: var(--text); transition: border-color 0.15s, background 0.15s;
+    }
+    .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--primary); background: #fff; }
+    .field textarea { resize: vertical; min-height: 90px; line-height: 1.5; }
+    .field .hint { font-size: 0.77rem; color: var(--muted); margin-top: 0.3rem; }
+    .field input[type="color"] { padding: 0.2rem; height: 42px; cursor: pointer; }
+
+    /* ── Toggle ── */
+    .toggle-row { display: flex; align-items: center; gap: 0.75rem; margin-top: 0.25rem; }
+    .toggle { position: relative; width: 42px; height: 23px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle-track { position: absolute; inset: 0; background: #d1d5db; border-radius: 23px; cursor: pointer; transition: background 0.2s; }
+    .toggle-track::before { content: ''; position: absolute; width: 17px; height: 17px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: transform 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
+    .toggle input:checked ~ .toggle-track { background: var(--primary); }
+    .toggle input:checked ~ .toggle-track::before { transform: translateX(19px); }
+    .toggle-label { font-size: 0.9rem; color: var(--text); }
+
+    /* ── Sections ── */
+    .form-section { background: var(--card); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; border: 1px solid var(--border); }
+    .form-section h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; color: var(--text); }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 640px) { .grid-2 { grid-template-columns: 1fr; } .main { padding: 1rem; } }
+
+    /* ── Client list ── */
+    .list-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; }
+    .list-header h2 { font-size: 1.1rem; font-weight: 700; }
+    .clients-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 1rem; }
+    .client-card { background: var(--card); border-radius: 12px; padding: 1.2rem; display: flex; flex-direction: column; gap: 0.8rem; border: 1.5px solid var(--border); transition: box-shadow 0.15s; }
+    .client-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    .cc-header { display: flex; align-items: center; gap: 0.75rem; }
+    .cc-logo { width: 40px; height: 40px; border-radius: 8px; object-fit: contain; background: #f3f4f6; border: 1px solid var(--border); flex-shrink: 0; }
+    .cc-logo-placeholder { width: 40px; height: 40px; border-radius: 8px; background: var(--primary); display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 1.1rem; flex-shrink: 0; }
+    .cc-name { font-weight: 700; font-size: 0.95rem; }
+    .cc-industry { font-size: 0.78rem; color: var(--muted); }
+    .badge { display: inline-block; padding: 0.18rem 0.55rem; border-radius: 20px; font-size: 0.72rem; font-weight: 700; }
+    .badge-on  { background: #dcfce7; color: #15803d; }
+    .badge-off { background: #fee2e2; color: #b91c1c; }
+    .cc-slug { font-size: 0.78rem; color: var(--muted); font-family: monospace; background: #f3f4f6; padding: 0.2rem 0.5rem; border-radius: 5px; }
+    .cc-actions { display: flex; gap: 0.5rem; margin-top: 0.25rem; flex-wrap: wrap; }
+
+    /* ── Alerts ── */
+    .alert { padding: 0.75rem 1rem; border-radius: 8px; font-size: 0.88rem; margin-bottom: 1rem; }
+    .alert-error   { background: #fee2e2; color: #b91c1c; }
+    .alert-success { background: #dcfce7; color: #15803d; }
+
+    /* ── Save bar ── */
+    .save-bar {
+      position: sticky; bottom: 0;
+      background: var(--card); border-top: 1px solid var(--border);
+      padding: 0.9rem 1.75rem; display: flex; align-items: center; gap: 0.75rem;
+      box-shadow: 0 -4px 16px rgba(0,0,0,0.07);
+    }
+    .save-status { font-size: 0.85rem; font-weight: 600; }
+
+    /* ── Misc ── */
+    .spinner { display: inline-block; width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-center { text-align: center; padding: 3rem; color: var(--muted); }
+    .empty-state { text-align: center; padding: 3rem; color: var(--muted); grid-column: 1 / -1; }
+    .color-row { display: flex; gap: 0.5rem; align-items: center; }
+    .color-row input[type="color"] { flex-shrink: 0; width: 46px; border-radius: 7px; }
+    .color-row input[type="text"]  { flex: 1; font-family: monospace; }
+    a.btn { text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════
+     PANTALLA: Login
+════════════════════════════════════════ -->
+<div id="screen-login" class="screen">
+  <div class="login-card">
+    <div class="login-logo">⭐</div>
+    <h1>Reviews Admin</h1>
+    <p>Acceso restringido — solo administradores</p>
+
+    <div id="login-alert" class="alert alert-error" style="display:none"></div>
+
+    <div class="field">
+      <label>Clave de acceso</label>
+      <input type="password" id="inp-password" placeholder="••••••••" autocomplete="current-password" />
+    </div>
+
+    <div class="field" id="token-wrap">
+      <label>Token Airtable <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#9ca3af">(se guarda en este navegador)</span></label>
+      <input type="password" id="inp-token" placeholder="patXXXXXXXXXXXX..." autocomplete="off" />
+      <p class="hint">airtable.com → tu cuenta → Developer hub → Personal access tokens</p>
+    </div>
+    <div id="token-saved-row" style="display:none;margin-bottom:1.1rem">
+      <span style="font-size:0.83rem;color:var(--muted)">🔑 Token guardado en este navegador.</span>
+      <button class="btn btn-ghost btn-sm" onclick="clearToken()" style="padding:0.2rem 0.5rem">Cambiar</button>
+    </div>
+
+    <button class="btn btn-primary btn-full" onclick="doLogin()">Entrar →</button>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     PANTALLA: Lista de clientes
+════════════════════════════════════════ -->
+<div id="screen-list" class="screen">
+  <div class="admin-wrap">
+    <div class="topbar">
+      <span class="topbar-title">⭐ Reviews Admin</span>
+      <div class="spacer"></div>
+      <button class="btn btn-outline btn-sm" onclick="doLogout()">Salir</button>
+    </div>
+    <div class="main">
+      <div class="list-header">
+        <h2>Clientes</h2>
+        <div class="spacer"></div>
+        <button class="btn btn-primary" onclick="openForm(null)">+ Nuevo cliente</button>
+      </div>
+      <div id="list-loading" class="loading-center"><span class="spinner"></span></div>
+      <div id="clients-grid" class="clients-grid" style="display:none"></div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════════════════════════
+     PANTALLA: Formulario crear/editar
+════════════════════════════════════════ -->
+<div id="screen-form" class="screen">
+  <div class="admin-wrap">
+    <div class="topbar">
+      <button class="btn btn-outline btn-sm" onclick="goBackToList()">← Volver</button>
+      <span class="topbar-title" id="form-title">Nuevo cliente</span>
+      <div class="spacer"></div>
+    </div>
+    <div class="main" style="padding-bottom: 72px">
+      <div id="form-alert" style="display:none"></div>
+
+      <!-- 🏪 Datos del negocio -->
+      <div class="form-section">
+        <h3>🏪 Datos del negocio</h3>
+        <div class="grid-2">
+          <div class="field">
+            <label>Nombre del negocio *</label>
+            <input type="text" id="f-businessName" placeholder="Heladería Tino's" oninput="autoSlug()" />
+          </div>
+          <div class="field">
+            <label>Client ID (slug) *</label>
+            <input type="text" id="f-clientId" placeholder="heladeria-tinos" />
+            <p class="hint">reviews.mflowsuite.com/?clientId=<strong id="slug-preview">…</strong></p>
+          </div>
+          <div class="field">
+            <label>Rubro</label>
+            <input type="text" id="f-industry" placeholder="heladería, restaurante, bar…" />
+          </div>
+          <div class="field">
+            <label>Idioma</label>
+            <select id="f-language">
+              <option value="es-ES">🇪🇸 Español — España</option>
+              <option value="es-AR">🇦🇷 Español — Argentina</option>
+              <option value="es-MX">🇲🇽 Español — México</option>
+              <option value="en-US">🇺🇸 English — US</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Color de acento</label>
+            <div class="color-row">
+              <input type="color" id="f-color-picker" value="#6C63FF" oninput="onPickerChange()" />
+              <input type="text"  id="f-accentColor"  value="#6C63FF" placeholder="#6C63FF" oninput="onHexChange()" style="font-family:monospace" />
+            </div>
+          </div>
+          <div class="field">
+            <label>Estado</label>
+            <label class="toggle" style="margin-top:0.5rem">
+              <input type="checkbox" id="f-active" checked />
+              <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label" style="margin-top:0.35rem;display:block;font-size:0.85rem;color:var(--muted)">Cliente activo en el sistema</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 🖼️ Logo & Links -->
+      <div class="form-section">
+        <h3>🖼️ Logo & Links</h3>
+        <div class="field">
+          <label>URL del logo</label>
+          <input type="url" id="f-logoUrl" placeholder="https://reviews.mflowsuite.com/assets/logo.png" />
+          <p class="hint">Recomendado: subir en <code>assets/</code> del repo de GitHub y usar la URL pública.</p>
+        </div>
+        <div class="field">
+          <label>URL de Google Reviews</label>
+          <input type="url" id="f-googleReviewUrl" placeholder="https://g.page/r/XXXX/review" />
+        </div>
+      </div>
+
+      <!-- 📸 Foto -->
+      <div class="form-section">
+        <h3>📸 Foto de clientes</h3>
+        <div class="field">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="f-photoEnabled" onchange="toggleSection('photo-fields', this.checked)" />
+              <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label">Pedirle una foto al cliente</span>
+          </div>
+        </div>
+        <div id="photo-fields" style="display:none">
+          <div class="field">
+            <label>Texto del campo de foto</label>
+            <input type="text" id="f-photoPromptText" placeholder="¿Sacaste una foto? ¡Compartila!" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 🎁 Incentivo -->
+      <div class="form-section">
+        <h3>🎁 Incentivo / Cupón</h3>
+        <div class="field">
+          <div class="toggle-row">
+            <label class="toggle">
+              <input type="checkbox" id="f-incentiveEnabled" onchange="toggleSection('incentive-fields', this.checked)" />
+              <span class="toggle-track"></span>
+            </label>
+            <span class="toggle-label">Mostrar incentivo tras reseña positiva</span>
+          </div>
+        </div>
+        <div id="incentive-fields" style="display:none">
+          <div class="field">
+            <label>Texto del incentivo</label>
+            <textarea id="f-incentiveText" placeholder="Muestra esta pantalla en caja y llévate un topping gratis 🍦"></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- 📝 Texto fallback -->
+      <div class="form-section">
+        <h3>📝 Texto de reseña (fallback)</h3>
+        <div class="field">
+          <label>Texto sugerido manual</label>
+          <textarea id="f-suggestedReviewText" placeholder="El servicio fue excelente y los productos increíbles. Los recomiendo totalmente."></textarea>
+          <p class="hint">Se usa si la IA no está configurada o falla. El cliente puede editarlo antes de publicar.</p>
+        </div>
+      </div>
+
+      <!-- 🤖 Config IA -->
+      <div class="form-section">
+        <h3>🤖 Configuración IA <span style="font-weight:400;font-size:0.8rem;color:#9ca3af">— opcional, si está vacío usa prompt genérico</span></h3>
+        <div class="grid-2">
+          <div class="field">
+            <label>Temas posibles (aiTopics)</label>
+            <textarea id="f-aiTopics" placeholder="el ambiente del local&#10;la atención del personal&#10;los productos estrella&#10;la relación precio-calidad" style="min-height:110px"></textarea>
+            <p class="hint">Uno por línea — se elige 1 al azar en cada reseña.</p>
+          </div>
+          <div class="field">
+            <label>Tonos posibles (aiTones)</label>
+            <textarea id="f-aiTones" placeholder="entusiasta y amigable&#10;tranquilo y genuino&#10;emocionado y personal&#10;directo y concreto" style="min-height:110px"></textarea>
+            <p class="hint">Uno por línea — se elige 1 al azar.</p>
+          </div>
+          <div class="field">
+            <label>Estructuras de apertura (aiStyles)</label>
+            <textarea id="f-aiStyles" placeholder="empieza contando lo que pediste&#10;empieza con una emoción o sensación&#10;empieza recomendando el lugar&#10;empieza con un detalle específico" style="min-height:110px"></textarea>
+            <p class="hint">Uno por línea — se elige 1 al azar.</p>
+          </div>
+          <div class="field">
+            <label>Instrucciones fijas extra</label>
+            <textarea id="f-aiExtraInstructions" placeholder="Menciona el nombre del negocio. Sin signos de apertura (! ?)." style="min-height:110px"></textarea>
+            <p class="hint">Se incluyen siempre. Solo datos propios del negocio — el idioma lo maneja el campo de arriba.</p>
+          </div>
+        </div>
+        <div class="field" style="max-width: 200px; margin-top: 0.25rem">
+          <label>Oraciones máximas</label>
+          <input type="number" id="f-aiMaxSentences" min="1" max="5" value="2" />
+        </div>
+      </div>
+
+    </div><!-- /main -->
+
+    <!-- Barra sticky de guardado -->
+    <div class="save-bar">
+      <span class="save-status" id="save-status"></span>
+      <div class="spacer"></div>
+      <button class="btn btn-outline" onclick="goBackToList()">Cancelar</button>
+      <button class="btn btn-primary" id="save-btn" onclick="saveClient()">Guardar cliente</button>
+    </div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
