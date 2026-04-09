@@ -331,6 +331,22 @@
   </div>
 </div>
 
+<!-- ════════════════════════════════════════
+     MODAL: QR
+════════════════════════════════════════ -->
+<div id="qr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;align-items:center;justify-content:center;" onclick="closeQR(event)">
+  <div id="qr-modal-inner" style="background:#fff;border-radius:20px;padding:2rem;max-width:380px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,0.4);transition:background .25s,color .25s">
+    <h3 id="qr-title" style="font-size:1rem;font-weight:700;margin-bottom:1.25rem"></h3>
+    <img id="qr-img" src="" alt="QR Code" style="width:100%;max-width:280px;border-radius:10px;display:block;margin:0 auto 1.5rem" />
+    <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" id="qr-mode-btn"     onclick="toggleQRMode()">🌙 Modo noche</button>
+      <button class="btn btn-outline btn-sm" id="qr-download-btn" onclick="downloadQR()">⬇️ Descargar</button>
+      <button class="btn btn-outline btn-sm"                       onclick="printQR()">🖨️ Imprimir</button>
+      <button class="btn btn-primary btn-sm"                       onclick="closeQR()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script src="app.js"></script>
 </body>
 </html>

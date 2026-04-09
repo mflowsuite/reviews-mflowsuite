@@ -13,6 +13,79 @@ const state = {
   editingRecordId: null,   // null = nuevo, string = editar
 };
 
+// ── Estado QR ──────────────────────────────────────────────
+const qr = { slug: '', name: '', dark: false };
+
+function qrBuildUrl(slug, dark) {
+  const data   = encodeURIComponent('https://reviews.mflowsuite.com/?clientId=' + slug);
+  const colors = dark ? '&color=ffffff&bgcolor=1a1a2e' : '';
+  return `https://api.qrserver.com/v1/create-qr-code/?size=600x600${colors}&data=${data}`;
+}
+
+function openQR(slug, name) {
+  qr.slug = slug; qr.name = name; qr.dark = false;
+  document.getElementById('qr-modal').style.display     = 'flex';
+  document.getElementById('qr-modal-inner').style.background = '#fff';
+  document.getElementById('qr-title').textContent       = name;
+  document.getElementById('qr-img').src                 = qrBuildUrl(slug, false);
+  document.getElementById('qr-mode-btn').textContent    = '🌙 Modo noche';
+}
+
+function closeQR(e) {
+  if (!e || e.target === document.getElementById('qr-modal')) {
+    document.getElementById('qr-modal').style.display = 'none';
+  }
+}
+
+function toggleQRMode() {
+  qr.dark = !qr.dark;
+  const inner = document.getElementById('qr-modal-inner');
+  inner.style.background = qr.dark ? '#1a1a2e' : '#fff';
+  inner.style.color      = qr.dark ? '#fff' : 'var(--text)';
+  document.getElementById('qr-img').src              = qrBuildUrl(qr.slug, qr.dark);
+  document.getElementById('qr-mode-btn').textContent = qr.dark ? '☀️ Modo día' : '🌙 Modo noche';
+}
+
+async function downloadQR() {
+  const btn = document.getElementById('qr-download-btn');
+  btn.textContent = 'Descargando…';
+  btn.disabled    = true;
+  try {
+    const res  = await fetch(qrBuildUrl(qr.slug, qr.dark));
+    const blob = await res.blob();
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = `qr-${qr.slug}${qr.dark ? '-dark' : ''}.png`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } finally {
+    btn.textContent = '⬇️ Descargar';
+    btn.disabled    = false;
+  }
+}
+
+function printQR() {
+  const bg  = qr.dark ? '#1a1a2e' : '#ffffff';
+  const fg  = qr.dark ? '#ffffff' : '#000000';
+  const url = qrBuildUrl(qr.slug, qr.dark);
+  const win = window.open('', '_blank', 'width=520,height=600');
+  win.document.write(`<!DOCTYPE html><html><head><title>QR · ${qr.name}</title>
+  <style>
+    body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;
+         min-height:100vh;background:${bg};color:${fg};font-family:sans-serif}
+    img{width:380px;height:380px;display:block}
+    p{margin-top:1rem;font-size:1.1rem;font-weight:700;text-align:center}
+    small{font-size:.75rem;opacity:.6;margin-top:.3rem}
+    @media print{body{min-height:unset}}
+  </style></head><body>
+  <img src="${url}" />
+  <p>${qr.name}</p>
+  <small>reviews.mflowsuite.com/?clientId=${qr.slug}</small>
+  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),800)}<\/script>
+  </body></html>`);
+  win.document.close();
+}
+
 // ══════════════════════════════════════════════════════════
 //  PANTALLAS
 // ══════════════════════════════════════════════════════════
@@ -115,7 +188,6 @@ function renderList() {
     const name    = f.businessName || '—';
     const initial = name.charAt(0).toUpperCase();
     const slug    = f.clientId || '';
-    const qrUrl   = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&data=${encodeURIComponent('https://reviews.mflowsuite.com/?clientId=' + slug)}`;
     const webUrl  = `https://reviews.mflowsuite.com/?clientId=${slug}`;
 
     const logo = f.logoUrl
@@ -135,7 +207,7 @@ function renderList() {
         <div class="cc-slug">${slug}</div>
         <div class="cc-actions">
           <button class="btn btn-outline btn-sm" onclick="openForm('${rec.id}')">✏️ Editar</button>
-          <a class="btn btn-outline btn-sm" href="${qrUrl}" target="_blank">📱 QR</a>
+          <button class="btn btn-outline btn-sm" onclick="openQR('${slug}','${name.replace(/'/g,"\\'")}')" >📱 QR</button>
           <a class="btn btn-outline btn-sm" href="${webUrl}" target="_blank">👁️ Ver</a>
         </div>
       </div>`;
@@ -336,6 +408,7 @@ async function saveClient() {
 
     statusEl.textContent = '✅ Guardado correctamente';
     statusEl.style.color = 'var(--success)';
+    setTimeout(() => goBackToList(), 1400);
 
   } catch (e) {
     showFormAlert(`Error al guardar: ${e.message}`);

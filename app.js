@@ -325,6 +325,16 @@ function renderStars(filled) {
 function selectRating(val) {
   state.selectedRating = val;
   renderStars(val);
+  // Actualizar emoji y etiqueta
+  const emojiEl = document.getElementById('emoji-display');
+  if (emojiEl) {
+    emojiEl.textContent = EMOJI_MAP[val];
+    emojiEl.classList.add('pop');
+    setTimeout(() => emojiEl.classList.remove('pop'), 250);
+  }
+  const lang = (state.client && state.client.language) || 'es-ES';
+  const labelEl = document.getElementById('rating-label');
+  if (labelEl) labelEl.textContent = (T[lang] || T['es-ES']).ratingLabels[val] || '';
   // Mostrar botón confirmar (se re-anima en cada cambio de estrella)
   const btn = document.getElementById('confirm-rating-btn');
   if (btn) {
