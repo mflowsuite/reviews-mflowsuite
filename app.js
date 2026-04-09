@@ -137,7 +137,7 @@ async function init() {
     );
     clearTimeout(timeout);
 
-    if (!res.ok) throw new Error('not found');
+    if (!res.ok) throw new Error('http_' + res.status);
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
@@ -148,16 +148,20 @@ async function init() {
     showScreen('rating');
     requestAnimationFrame(() => selectRating(5)); // precargar después de que la pantalla sea visible
   } catch (err) {
-    console.warn('Config fetch failed:', err);
-    // Si es timeout, mostrar igual con datos mínimos para no perder al cliente
-    if (err.name === 'AbortError') {
+    console.warn('Config fetch failed:', err.name, err.message);
+    // Mostrar pantalla genérica para cualquier error de red o timeout
+    // Solo mostrar error "Enlace no válido" si el cliente no existe (404)
+    if (err.message === 'http_404' || err.message === 'Client not found or inactive') {
+      showScreen('error');
+    } else {
+      // Red lenta, servidor caído, timeout — mostrar igual sin branding
       state.client = { clientId: state.clientId, language: 'es-ES' };
       buildStars();
       applyTranslations('es-ES');
       showScreen('rating');
+      const banner = document.getElementById('offline-banner');
+      if (banner) banner.style.display = 'block';
       requestAnimationFrame(() => selectRating(5));
-    } else {
-      showScreen('error');
     }
   }
 }
