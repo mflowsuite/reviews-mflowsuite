@@ -276,48 +276,20 @@ function buildStars() {
     btn.setAttribute('aria-label', `${i} estrellas`);
     btn.setAttribute('type', 'button');
 
-    // Mouse (desktop)
+    // Desktop: hover + click
     btn.addEventListener('mouseenter', () => updateHover(i));
     btn.addEventListener('mouseleave', () => resetHover());
     btn.addEventListener('click',      () => selectRating(i));
 
+    // Mobile: cada botón conoce su propio valor — sin getBoundingClientRect
+    btn.addEventListener('touchstart', () => updateHover(i), { passive: true });
+    btn.addEventListener('touchend', (e) => {
+      e.preventDefault(); // evita el click fantasma 300ms después
+      selectRating(i);
+    }, { passive: false });
+
     container.appendChild(btn);
   }
-
-  // Touch: manejo a nivel de contenedor para permitir deslizar entre estrellas
-  let touchActive = false;
-  container.addEventListener('touchstart', (e) => {
-    e.preventDefault();
-    touchActive = true;
-    const star = getStarAtPoint(e.touches[0].clientX, e.touches[0].clientY);
-    if (star) updateHover(star);
-  }, { passive: false });
-
-  container.addEventListener('touchmove', (e) => {
-    if (!touchActive) return;
-    e.preventDefault();
-    const star = getStarAtPoint(e.touches[0].clientX, e.touches[0].clientY);
-    if (star) updateHover(star);
-  }, { passive: false });
-
-  container.addEventListener('touchend', (e) => {
-    e.preventDefault();
-    touchActive = false;
-    const star = getStarAtPoint(e.changedTouches[0].clientX, e.changedTouches[0].clientY)
-                 || state.hoveredRating;
-    if (star) selectRating(star);
-  }, { passive: false });
-}
-
-function getStarAtPoint(x, y) {
-  const stars = document.querySelectorAll('.star-btn');
-  for (const star of stars) {
-    const r = star.getBoundingClientRect();
-    if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
-      return parseInt(star.getAttribute('data-value'));
-    }
-  }
-  return null;
 }
 
 function updateHover(val) {
