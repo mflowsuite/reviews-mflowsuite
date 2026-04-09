@@ -188,8 +188,10 @@ const ADMIN_CONFIG = {
 ---
 
 ## Pendientes / Próximos pasos
-- [ ] Dominio propio para n8n: `n8n.mflowsuite.com` (CNAME en DNS de mflowsuite.com)
 - [ ] Panel admin: pantalla para dar de alta clientes sin tocar Airtable directamente
-- [ ] QR por cliente: ya funciona en el modal del admin, falta generar físico para Tino's
-- [ ] Prompt IA dinámico (plan en `.claude/plans/`): campos `aiTopics`, `aiTones`, `aiStyles` ya existen en Airtable, falta cargar valores para Tino's
+- [ ] QR por cliente: ya funciona en el modal del admin, falta imprimir físico para Tino's
 - [ ] Workflow A: el nodo "OPEN API" está desconectado (huérfano) — se puede eliminar para limpiar
+
+## Completado ✅
+- [x] Prompt IA dinámico para Tino's: campos `aiTopics`, `aiTones`, `aiStyles`, `aiMaxSentences`, `aiExtraInstructions` cargados en Airtable. Workflow E los usa para generar texto variado.
+- [x] Dominio n8n: `fluky-n8n.lembgk.easypanel.host` funciona bien. Solo falla si el usuario tiene una VPN activa en su dispositivo (solución: desactivar VPN). No requiere cambio.
