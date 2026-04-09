@@ -2,27 +2,16 @@
 //  ⚙️  CONFIGURACIÓN — cambiá solo este bloque
 // ══════════════════════════════════════════════════════════
 const ADMIN_CONFIG = {
-  password: 'Mflow@dmin25',        // ← Tu clave de acceso (cambiala)
-  baseId:   'appwlnvY7rceVb06Q',
-  tableId:  'tblxTlomzuupQcgyY',
+  n8nWebhook: 'https://fluky-n8n.lembgk.easypanel.host/webhook/admin-clients',
 };
 // ══════════════════════════════════════════════════════════
 
-const AT_URL = `https://api.airtable.com/v0/${ADMIN_CONFIG.baseId}/${ADMIN_CONFIG.tableId}`;
-
 // ── Estado global ──────────────────────────────────────────
 const state = {
-  token:           localStorage.getItem('admin_at') || '',
+  password:        sessionStorage.getItem('admin_pwd') || '',
   clients:         [],
   editingRecordId: null,   // null = nuevo, string = editar
 };
-
-function atHeaders() {
-  return {
-    'Authorization': `Bearer ${state.token}`,
-    'Content-Type':  'application/json',
-  };
-}
 
 // ══════════════════════════════════════════════════════════
 //  PANTALLAS
@@ -33,36 +22,50 @@ function showScreen(id) {
 }
 
 // ══════════════════════════════════════════════════════════
+//  CALL n8n helper
+// ══════════════════════════════════════════════════════════
+async function callN8n(payload) {
+  const res = await fetch(ADMIN_CONFIG.n8nWebhook, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ key: state.password, ...payload }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+  return data;
+}
+
+// ══════════════════════════════════════════════════════════
 //  LOGIN
 // ══════════════════════════════════════════════════════════
 async function doLogin() {
-  const pwd        = document.getElementById('inp-password').value.trim();
-  const tokenInput = document.getElementById('inp-token').value.trim();
-  const alertEl    = document.getElementById('login-alert');
+  const pwd     = document.getElementById('inp-password').value.trim();
+  const alertEl = document.getElementById('login-alert');
   alertEl.style.display = 'none';
 
-  if (pwd !== ADMIN_CONFIG.password) {
-    showLoginError('Clave incorrecta.');
+  if (!pwd) {
+    showLoginError('Ingresá la clave de acceso.');
     return;
   }
 
-  const token = tokenInput || state.token;
-  if (!token) {
-    showLoginError('Ingresá tu token de Airtable (solo se pide una vez).');
-    return;
-  }
-
-  // Validar token contra Airtable
+  // Validar clave contra n8n (que a su vez llama a Airtable)
+  state.password = pwd;
   try {
-    const res = await fetch(`${AT_URL}?maxRecords=1`, {
-      headers: { 'Authorization': `Bearer ${token}` }
-    });
-    if (!res.ok) throw new Error();
-    state.token = token;
-    localStorage.setItem('admin_at', token);
-    await loadClients();
-  } catch {
-    showLoginError('Token de Airtable inválido. Copialo desde airtable.com → Developer hub → Personal access tokens.');
+    const data = await callN8n({ action: 'list' });
+    if (data.error === 'Unauthorized') throw new Error('unauthorized');
+    // Login OK
+    sessionStorage.setItem('admin_pwd', pwd);
+    state.clients = (data.records || []);
+    renderList();
+    showScreen('list');
+  } catch (e) {
+    state.password = '';
+    if (e.message === 'unauthorized') {
+      showLoginError('Clave incorrecta.');
+    } else {
+      showLoginError('No se pudo conectar al servidor. Intentá de nuevo.');
+      console.error(e);
+    }
   }
 }
 
@@ -72,15 +75,10 @@ function showLoginError(msg) {
   el.style.display = 'block';
 }
 
-function clearToken() {
-  localStorage.removeItem('admin_at');
-  state.token = '';
-  document.getElementById('token-saved-row').style.display = 'none';
-  document.getElementById('token-wrap').style.display = 'block';
-  document.getElementById('inp-token').value = '';
-}
-
 function doLogout() {
+  sessionStorage.removeItem('admin_pwd');
+  state.password = '';
+  state.clients  = [];
   showScreen('login');
 }
 
@@ -93,11 +91,7 @@ async function loadClients() {
   document.getElementById('clients-grid').style.display = 'none';
 
   try {
-    const res  = await fetch(`${AT_URL}?sort[0][field]=businessName&sort[0][direction]=asc`, {
-      headers: atHeaders()
-    });
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || 'Error al cargar');
+    const data = await callN8n({ action: 'list' });
     state.clients = data.records || [];
     renderList();
   } catch (e) {
@@ -316,7 +310,7 @@ async function saveClient() {
     fields.createdAt = new Date().toISOString().split('T')[0];
   }
 
-  // ── Limpiar campos vacíos opcionales (Airtable no le gusta strings vacíos en algunos tipos) ──
+  // ── Limpiar campos vacíos opcionales ──
   ['logoUrl','googleReviewUrl','photoPromptText','incentiveText',
    'suggestedReviewText','aiTopics','aiTones','aiStyles','aiExtraInstructions',
    'industry'].forEach(k => {
@@ -324,24 +318,11 @@ async function saveClient() {
   });
 
   try {
-    let res, url, method;
-
-    if (state.editingRecordId) {
-      url    = `${AT_URL}/${state.editingRecordId}`;
-      method = 'PATCH';
-    } else {
-      url    = AT_URL;
-      method = 'POST';
-    }
-
-    res = await fetch(url, {
-      method,
-      headers: atHeaders(),
-      body: JSON.stringify({ fields, typecast: true }),
+    const data = await callN8n({
+      action:   'save',
+      recordId: state.editingRecordId || null,
+      fields,
     });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error?.message || JSON.stringify(data));
 
     // ── Actualizar estado local ──
     if (state.editingRecordId) {
@@ -377,17 +358,9 @@ function showFormAlert(msg) {
 //  INICIALIZACIÓN
 // ══════════════════════════════════════════════════════════
 (function init() {
-  // Si ya hay token guardado → ocultar el campo, mostrar el aviso
-  if (state.token) {
-    document.getElementById('token-wrap').style.display      = 'none';
-    document.getElementById('token-saved-row').style.display = 'flex';
-  }
-
   // Enter en login hace submit
-  ['inp-password', 'inp-token'].forEach(id => {
-    document.getElementById(id).addEventListener('keydown', e => {
-      if (e.key === 'Enter') doLogin();
-    });
+  document.getElementById('inp-password').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
   });
 
   showScreen('login');

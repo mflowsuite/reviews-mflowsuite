@@ -29,7 +29,26 @@
         },
         "filterByFormula": "={clientId}='{{ $json.query.clientId }}'",
         "options": {
-          "fields": ["clientId","businessName","industry","language","logoUrl","googleReviewUrl","accentColor","suggestedReviewText","photoUploadEnabled","photoPromptText","incentiveEnabled","incentiveText","active"]
+          "fields": [
+            "clientId",
+            "businessName",
+            "industry",
+            "language",
+            "logoUrl",
+            "googleReviewUrl",
+            "accentColor",
+            "suggestedReviewText",
+            "photoUploadEnabled",
+            "photoPromptText",
+            "incentiveEnabled",
+            "incentiveText",
+            "active",
+            "aiTopics",
+            "aiTones",
+            "aiStyles",
+            "aiMaxSentences",
+            "aiExtraInstructions"
+          ]
         }
       },
       "id": "airtable-get-client",
@@ -95,7 +114,7 @@
           "parameters": []
         },
         "specifyBody": "json",
-        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 120,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Genera una reseña corta y auténtica (máximo 2 oraciones) para {{ $('Airtable - Buscar Cliente').item.json.fields.businessName }}, un/a {{ $('Airtable - Buscar Cliente').item.json.fields.industry }}. Primera persona, {{ $('Airtable - Buscar Cliente').item.json.fields.language === 'es-ES' ? 'español de España' : $('Airtable - Buscar Cliente').item.json.fields.language === 'es-AR' ? 'español argentino' : 'español neutro' }}. Sin hashtags, sin comillas al inicio/fin, suena natural.\"\n    }\n  ]\n}",
+        "jsonBody": "={\n  \"model\": \"claude-haiku-4-5-20251001\",\n  \"max_tokens\": 150,\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Escribi una reseña de {{ $('Airtable - Buscar Cliente').item.json.fields.aiMaxSentences || 2 }} oraciones para {{ $('Airtable - Buscar Cliente').item.json.fields.businessName }}, un/a {{ $('Airtable - Buscar Cliente').item.json.fields.industry }}. Foco: {{ (($('Airtable - Buscar Cliente').item.json.fields.aiTopics || '').split('\\n').filter(Boolean))[Math.floor(Math.random() * Math.max(($('Airtable - Buscar Cliente').item.json.fields.aiTopics || '').split('\\n').filter(Boolean).length, 1))] || 'la experiencia general' }}. Tono: {{ (($('Airtable - Buscar Cliente').item.json.fields.aiTones || '').split('\\n').filter(Boolean))[Math.floor(Math.random() * Math.max(($('Airtable - Buscar Cliente').item.json.fields.aiTones || '').split('\\n').filter(Boolean).length, 1))] || 'natural y genuino' }}. Estructura: {{ (($('Airtable - Buscar Cliente').item.json.fields.aiStyles || '').split('\\n').filter(Boolean))[Math.floor(Math.random() * Math.max(($('Airtable - Buscar Cliente').item.json.fields.aiStyles || '').split('\\n').filter(Boolean).length, 1))] || 'directo y personal' }}. Idioma: {{ $('Airtable - Buscar Cliente').item.json.fields.language === 'es-ES' ? 'español de España' : $('Airtable - Buscar Cliente').item.json.fields.language === 'es-AR' ? 'español argentino' : 'español neutro' }}. Primera persona. Sin hashtags. Sin comillas. {{ $('Airtable - Buscar Cliente').item.json.fields.aiExtraInstructions || '' }}\"\n    }\n  ]\n}",
         "options": {
           "timeout": 8000
         }

@@ -1,0 +1,5 @@
+# Workflows con credenciales embebidas (importar manualmente en n8n)
+n8n-workflow-C-admin-crud.json
+
+# Claude local files
+.claude/
