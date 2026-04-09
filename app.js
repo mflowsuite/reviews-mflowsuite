@@ -283,10 +283,7 @@ function buildStars() {
 
     // Mobile: cada botón conoce su propio valor — sin getBoundingClientRect
     btn.addEventListener('touchstart', () => updateHover(i), { passive: true });
-    btn.addEventListener('touchend', (e) => {
-      e.preventDefault(); // evita el click fantasma 300ms después
-      selectRating(i);
-    }, { passive: false });
+    btn.addEventListener('touchend',   () => selectRating(i), { passive: true });
 
     container.appendChild(btn);
   }
