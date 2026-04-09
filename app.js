@@ -320,21 +320,32 @@ function renderStars(filled) {
   });
 }
 
-let _ratingTimer = null;
 function selectRating(val) {
   state.selectedRating = val;
   renderStars(val);
-  // Debounce: si el usuario toca otra estrella antes de 700ms, reinicia el timer
-  if (_ratingTimer) clearTimeout(_ratingTimer);
-  _ratingTimer = setTimeout(() => {
-    _ratingTimer = null;
-    if (val >= CONFIG.POSITIVE_MIN) {
-      showScreen('positive-write');
-    } else {
-      showScreen('negative');
-      document.getElementById('neg-emoji').textContent = EMOJI_MAP[val];
-    }
-  }, 700);
+  // Mostrar botón confirmar (se re-anima en cada cambio de estrella)
+  const btn = document.getElementById('confirm-rating-btn');
+  if (btn) {
+    btn.style.display = 'block';
+    // Re-trigger animation al cambiar estrella
+    btn.style.animation = 'none';
+    btn.offsetWidth; // reflow
+    btn.style.animation = '';
+  }
+}
+
+function confirmRating() {
+  const val = state.selectedRating;
+  if (!val) return;
+  if (val >= CONFIG.POSITIVE_MIN) {
+    showScreen('positive-write');
+  } else {
+    showScreen('negative');
+    document.getElementById('neg-emoji').textContent = EMOJI_MAP[val];
+  }
+  // Ocultar el botón para la próxima vez que se vuelva a la pantalla
+  const btn = document.getElementById('confirm-rating-btn');
+  if (btn) btn.style.display = 'none';
 }
 
 /* ============================================================
