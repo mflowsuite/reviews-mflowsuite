@@ -143,18 +143,18 @@ async function init() {
     state.client = data;
     applyBranding(data);
     buildStars();
-    selectRating(5); // precargar 5 estrellas
     applyTranslations(data.language || 'es-ES');
     showScreen('rating');
+    requestAnimationFrame(() => selectRating(5)); // precargar después de que la pantalla sea visible
   } catch (err) {
     console.warn('Config fetch failed:', err);
     // Si es timeout, mostrar igual con datos mínimos para no perder al cliente
     if (err.name === 'AbortError') {
       state.client = { clientId: state.clientId, language: 'es-ES' };
       buildStars();
-      selectRating(5); // precargar 5 estrellas
       applyTranslations('es-ES');
       showScreen('rating');
+      requestAnimationFrame(() => selectRating(5));
     } else {
       showScreen('error');
     }
