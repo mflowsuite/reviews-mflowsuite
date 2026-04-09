@@ -3,6 +3,7 @@
    ============================================================ */
 const CONFIG = {
   N8N_CONFIG_URL:   'https://fluky-n8n.lembgk.easypanel.host/webhook/get-client-config',
+  N8N_GENERATE_URL: 'https://fluky-n8n.lembgk.easypanel.host/webhook/generate-review-text',
   N8N_FEEDBACK_URL: 'https://fluky-n8n.lembgk.easypanel.host/webhook/save-feedback',
   POSITIVE_MIN:     4,   // 4+ estrellas = flujo positivo
   PHOTO_MAX_PX:     1200, // máximo px para comprimir imagen
@@ -128,7 +129,7 @@ async function init() {
 
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000); // 8s max
+    const timeout = setTimeout(() => controller.abort(), 12000); // 12s max
 
     const res = await fetch(
       `${CONFIG.N8N_CONFIG_URL}?clientId=${encodeURIComponent(state.clientId)}`,
@@ -403,12 +404,12 @@ async function generateAIText() {
     let reviewText = state.client && state.client.suggestedReviewAI;
 
     if (!reviewText) {
-      // Si la IA no vino precargada, pide al webhook
+      // Pide texto generado por IA al endpoint dedicado
       const res = await fetch(
-        `${CONFIG.N8N_CONFIG_URL}?clientId=${encodeURIComponent(state.clientId)}`
+        `${CONFIG.N8N_GENERATE_URL}?clientId=${encodeURIComponent(state.clientId)}`
       );
       const data = await res.json();
-      reviewText = data.suggestedReviewAI || data.suggestedReviewText || '';
+      reviewText = data.reviewText || data.suggestedReviewAI || data.suggestedReviewText || '';
     }
 
     // Último fallback: texto estático guardado en state al cargar la config
