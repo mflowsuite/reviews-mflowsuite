@@ -435,26 +435,35 @@ async function generateAIText() {
   document.getElementById('pw-with-text').style.display  = 'flex';
 }
 
-async function handleCopyAndOpen() {
+function handleCopyAndOpen() {
   const text = document.getElementById('review-text').value.trim() ||
                (state.client && state.client.suggestedReviewText) ||
                'Muy buena experiencia, lo recomiendo !!';
 
-  // Abrir Google PRIMERO (antes de cualquier await — móvil Safari bloquea popups post-await)
+  // 1. Copiar PRIMERO con execCommand (sync — funciona en iOS Safari con user gesture)
+  //    iOS requiere: readonly, setSelectionRange, y restaurar scroll
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.setAttribute('readonly', '');
+  ta.style.cssText = 'position:absolute;left:-9999px;top:0;';
+  document.body.appendChild(ta);
+  const yPos = window.pageYOffset || document.documentElement.scrollTop;
+  ta.focus();
+  ta.setSelectionRange(0, text.length);
+  try { document.execCommand('copy'); } catch(e) {}
+  document.body.removeChild(ta);
+  window.scrollTo(0, yPos);
+
+  // Intentar también Clipboard API en background (para navegadores sin execCommand)
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).catch(() => {});
+  }
+
+  // 2. Abrir Google (mismo user gesture sync — no bloqueado en Safari)
   const url = state.client && state.client.googleReviewUrl;
   if (url) window.open(url, '_blank');
 
-  // Copiar al portapapeles
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    const ta = document.createElement('textarea');
-    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
-    document.body.appendChild(ta); ta.select();
-    document.execCommand('copy'); document.body.removeChild(ta);
-  }
-
-  // Feedback visual en el botón, luego directo a gracias + incentivo
+  // 3. Feedback visual en el botón, luego directo a gracias + incentivo
   const btn = document.getElementById('copy-open-btn');
   if (btn) { btn.textContent = '✓ Texto copiado!'; btn.disabled = true; }
   setTimeout(() => showThankyouPositive(), 1500);
