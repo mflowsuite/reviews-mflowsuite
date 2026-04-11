@@ -88,9 +88,13 @@
         <span class="emoji-display animated-bounce" aria-hidden="true">📋</span>
         <h2>¡Texto copiado!</h2>
         <div class="instruction-box">
-          <p>Se abrió Google en otra pestaña.</p>
-          <p><strong>Solo pega el texto y ponle 5 estrellas ⭐⭐⭐⭐⭐</strong></p>
-          <p class="instruction-hint">(Ctrl+V en PC / Mantén pulsado en móvil → Pegar)</p>
+          <p class="paste-instruction">📌 <strong>Pegá el texto en Google</strong></p>
+          <p class="paste-hint">📱 Mantén pulsado → <strong>Pegar</strong></p>
+          <p class="paste-hint-pc">🖥️ Ctrl+V en PC &nbsp;·&nbsp; Cmd+V en Mac</p>
+        </div>
+        <div id="po-copied-text" class="copied-text-box" style="display:none">
+          <p class="copied-text-label">Tu reseña:</p>
+          <p id="po-review-preview" class="review-preview"></p>
         </div>
         <button class="btn btn-success" onclick="showThankyouPositive()">
           ✅ ¡Listo, ya lo dejé!
@@ -161,6 +165,31 @@
         <p class="closing-msg" id="ty-neg-closing">Gracias por darnos la oportunidad de mejorar 🙌</p>
       </div>
 
+      <!-- SCREEN: incentive-gate (pide email antes de mostrar el cupón) -->
+      <div id="screen-incentive-gate" class="screen">
+        <span class="emoji-display animated-pop" aria-hidden="true">🎁</span>
+        <h2>¡Hay un regalo para ti!</h2>
+        <p class="subtitle">Ingresa tu email para recibirlo</p>
+        <form id="claim-form" novalidate>
+          <div class="field-group">
+            <input type="email" id="claim-email" name="claim-email"
+                   autocomplete="email"
+                   placeholder="tu@email.com" required />
+          </div>
+          <div id="claim-error" class="form-error" style="display:none" role="alert"></div>
+          <button type="submit" class="btn btn-primary" id="claim-btn">Reclamar regalo 🎁</button>
+        </form>
+        <a href="#" class="skip-link" onclick="skipIncentive(); return false;">Prefiero no recibirlo</a>
+      </div>
+
+      <!-- SCREEN: incentive-used (ya reclamado anteriormente) -->
+      <div id="screen-incentive-used" class="screen">
+        <span class="emoji-display animated-pop" aria-hidden="true">💜</span>
+        <h2>Ya recibiste este regalo</h2>
+        <p class="subtitle">Anteriormente reclamaste un cupón para este lugar. ¡Gracias por volver!</p>
+        <p class="closing-msg">¡Hasta la próxima! 👋</p>
+      </div>
+
       <!-- SCREEN: incentive (cupón — aparece si incentiveEnabled=TRUE) -->
       <div id="screen-incentive" class="screen">
         <span class="emoji-display animated-bounce" aria-hidden="true">🎁</span>
@@ -169,8 +198,10 @@
           <div class="coupon-inner">
             <img id="incentive-logo" class="incentive-logo" src="" alt="" />
             <p id="incentive-text" class="incentive-text"></p>
+            <p id="coupon-code" class="coupon-code" style="display:none"></p>
           </div>
         </div>
+        <p class="incentive-hint">Mostrá esta pantalla (o el email) en el local para canjearlo 🏪</p>
 
         <button class="btn btn-outline" onclick="closePage()">¡Entendido, gracias! 🙏</button>
       </div>

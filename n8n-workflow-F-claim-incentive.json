@@ -1,0 +1,332 @@
+{
+  "name": "Reseñas - F: Claim Incentive",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "claim-incentive",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-claim",
+      "name": "Webhook POST",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "loose" },
+          "conditions": [{
+            "id": "c-options",
+            "leftValue": "={{ $json.headers['request-method'] ?? $json.method ?? '' }}",
+            "rightValue": "OPTIONS",
+            "operator": { "type": "string", "operation": "equals" }
+          }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-options",
+      "name": "IF - OPTIONS preflight",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin",  "value": "*" },
+              { "name": "Access-Control-Allow-Methods", "value": "POST, OPTIONS" },
+              { "name": "Access-Control-Allow-Headers", "value": "Content-Type" }
+            ]
+          }
+        }
+      },
+      "id": "respond-preflight",
+      "name": "Respond - Preflight OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [480, 160]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst clientId = String(body.clientId || '').trim();\nconst email = String(body.email || '').toLowerCase().trim();\n\nif (!clientId || !email || !email.includes('@')) {\n  throw new Error('Invalid clientId or email');\n}\n\nconst couponSearchUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tbljuu3kuNFezEanG?filterByFormula=' + encodeURIComponent(\"AND({clientId}='\" + clientId + \"',{email}='\" + email + \"')\") + '&maxRecords=1';\nconst clientSearchUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY?filterByFormula=' + encodeURIComponent(\"{clientId}='\" + clientId + \"'\") + '&maxRecords=1';\n\nreturn [{ json: { clientId, email, couponSearchUrl, clientSearchUrl } }];"
+      },
+      "id": "code-normalize",
+      "name": "Code - Normalize",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.couponSearchUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-search-coupons",
+      "name": "HTTP - Search Coupons",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 400],
+      "credentials": {
+        "httpHeaderAuth": { "id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const records = $input.first().json.records || [];\nconst prev = $('Code - Normalize').item.json;\n\nif (records.length > 0) {\n  return [{ json: { ...prev, alreadyClaimed: true, couponCode: records[0].fields.couponCode || '' } }];\n}\n\nconst prefix = prev.clientId.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase().padEnd(3, 'X');\nconst random = Math.random().toString(36).slice(2, 8).toUpperCase();\nconst couponCode = prefix + '-' + random;\n\nreturn [{ json: { ...prev, alreadyClaimed: false, couponCode } }];"
+      },
+      "id": "code-check-claimed",
+      "name": "Code - Check Claimed",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{
+            "id": "c-claimed",
+            "leftValue": "={{ $json.alreadyClaimed }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "equals" }
+          }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-claimed",
+      "name": "IF - Already Claimed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ claimed: true, couponCode: $json.couponCode }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type",                "value": "application/json" }
+            ]
+          }
+        }
+      },
+      "id": "respond-already-claimed",
+      "name": "Respond - Already Claimed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1440, 260]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.clientSearchUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-get-client",
+      "name": "HTTP - Get Client",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 540],
+      "credentials": {
+        "httpHeaderAuth": { "id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT" }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const clientRecord = ($input.first().json.records || [])[0];\nconst fields = clientRecord ? clientRecord.fields : {};\nconst prev = $('Code - Check Claimed').item.json;\n\nconst businessName = fields.businessName || prev.clientId;\nconst incentiveText = fields.incentiveText || 'Premio especial';\nconst notificationEmail = String(fields.notificationEmail || '').trim();\nconst { clientId, email, couponCode } = prev;\nconst claimedAt = new Date().toISOString();\n\nconst clientEmailSubject = '🎁 Tu regalo de ' + businessName;\nconst clientEmailBody = 'Hola!\\n\\nGracias por dejar tu reseña en ' + businessName + '.\\n\\n' +\n  'Tu premio: ' + incentiveText + '\\n\\n' +\n  'Código: ' + couponCode + '\\n\\n' +\n  'Mostrá este email en el local para canjearlo.\\n\\n¡Hasta pronto! 🙌';\n\nconst businessEmailSubject = '🎁 Nuevo cupón reclamado — ' + businessName;\nconst businessEmailBody = 'Un cliente reclamó su incentivo:\\n\\n' +\n  'Email: ' + email + '\\n' +\n  'Código: ' + couponCode + '\\n' +\n  'Fecha: ' + claimedAt + '\\n\\n' +\n  'Premio: ' + incentiveText;\n\nreturn [{ json: { clientId, email, couponCode, businessName, incentiveText, notificationEmail, claimedAt, clientEmailSubject, clientEmailBody, businessEmailSubject, businessEmailBody, hasNotificationEmail: notificationEmail.length > 0 } }];"
+      },
+      "id": "code-build-email",
+      "name": "Code - Build Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 540]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.airtable.com/v0/appwlnvY7rceVb06Q/tbljuu3kuNFezEanG",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "Content-Type", "value": "application/json" }]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ fields: { couponCode: $json.couponCode, clientId: $json.clientId, email: $json.email, claimedAt: $json.claimedAt, businessName: $json.businessName } }) }}",
+        "options": {}
+      },
+      "id": "http-create-coupon",
+      "name": "HTTP - Create Coupon",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 540],
+      "credentials": {
+        "httpHeaderAuth": { "id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT" }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code - Build Email').item.json.email }}",
+        "subject": "={{ $('Code - Build Email').item.json.clientEmailSubject }}",
+        "emailType": "text",
+        "message": "={{ $('Code - Build Email').item.json.clientEmailBody }}",
+        "options": {}
+      },
+      "id": "gmail-client",
+      "name": "Gmail - Send to Client",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [2160, 540],
+      "continueOnFail": true,
+      "credentials": {
+        "gmailOAuth2": { "id": "KdEbzCPLbG2lPsgs", "name": "Gmail Fluky" }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [{
+            "id": "c-has-email",
+            "leftValue": "={{ $('Code - Build Email').item.json.hasNotificationEmail }}",
+            "rightValue": true,
+            "operator": { "type": "boolean", "operation": "equals" }
+          }],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-has-notification",
+      "name": "IF - Has Notification Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [2400, 540]
+    },
+    {
+      "parameters": {
+        "sendTo": "={{ $('Code - Build Email').item.json.notificationEmail }}",
+        "subject": "={{ $('Code - Build Email').item.json.businessEmailSubject }}",
+        "emailType": "text",
+        "message": "={{ $('Code - Build Email').item.json.businessEmailBody }}",
+        "options": {}
+      },
+      "id": "gmail-business",
+      "name": "Gmail - Send to Business",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [2640, 400],
+      "continueOnFail": true,
+      "credentials": {
+        "gmailOAuth2": { "id": "KdEbzCPLbG2lPsgs", "name": "Gmail Fluky" }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ claimed: false, couponCode: $('Code - Build Email').item.json.couponCode }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" },
+              { "name": "Content-Type",                "value": "application/json" }
+            ]
+          }
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond - Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2880, 540]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\": \"Invalid request\"}",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {
+            "entries": [
+              { "name": "Access-Control-Allow-Origin", "value": "*" }
+            ]
+          }
+        }
+      },
+      "id": "respond-error",
+      "name": "Respond - Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 580]
+    }
+  ],
+  "connections": {
+    "Webhook POST": {
+      "main": [[{ "node": "IF - OPTIONS preflight", "type": "main", "index": 0 }]]
+    },
+    "IF - OPTIONS preflight": {
+      "main": [
+        [{ "node": "Respond - Preflight OK", "type": "main", "index": 0 }],
+        [{ "node": "Code - Normalize",        "type": "main", "index": 0 }]
+      ]
+    },
+    "Code - Normalize": {
+      "main":  [[{ "node": "HTTP - Search Coupons", "type": "main", "index": 0 }]],
+      "error": [[{ "node": "Respond - Error",       "type": "main", "index": 0 }]]
+    },
+    "HTTP - Search Coupons": {
+      "main": [[{ "node": "Code - Check Claimed", "type": "main", "index": 0 }]]
+    },
+    "Code - Check Claimed": {
+      "main": [[{ "node": "IF - Already Claimed", "type": "main", "index": 0 }]]
+    },
+    "IF - Already Claimed": {
+      "main": [
+        [{ "node": "Respond - Already Claimed", "type": "main", "index": 0 }],
+        [{ "node": "HTTP - Get Client",          "type": "main", "index": 0 }]
+      ]
+    },
+    "HTTP - Get Client": {
+      "main": [[{ "node": "Code - Build Email", "type": "main", "index": 0 }]]
+    },
+    "Code - Build Email": {
+      "main": [[{ "node": "HTTP - Create Coupon", "type": "main", "index": 0 }]]
+    },
+    "HTTP - Create Coupon": {
+      "main": [[{ "node": "Gmail - Send to Client", "type": "main", "index": 0 }]]
+    },
+    "Gmail - Send to Client": {
+      "main": [[{ "node": "IF - Has Notification Email", "type": "main", "index": 0 }]]
+    },
+    "IF - Has Notification Email": {
+      "main": [
+        [{ "node": "Gmail - Send to Business", "type": "main", "index": 0 }],
+        [{ "node": "Respond - Success",         "type": "main", "index": 0 }]
+      ]
+    },
+    "Gmail - Send to Business": {
+      "main": [[{ "node": "Respond - Success", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}

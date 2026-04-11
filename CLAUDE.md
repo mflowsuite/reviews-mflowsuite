@@ -45,6 +45,15 @@
 - Solo se llama cuando el usuario hace click en "Ayudame con el texto"
 - Tarda 3-5s (tiene OpenAI) — está bien porque el usuario espera activamente
 
+### Workflow F — Claim Incentive (`1u5GwJP3JKKw9HzL`)
+- **Webhook**: `POST /webhook/claim-incentive`
+- **Body**: `{ clientId, email }`
+- **Flujo**: Normalizar → Buscar en tabla `coupons` → IF ya reclamado → Respond `{ claimed: true }`
+  - Si NO reclamado → Get client config → Build email data → Guardar en `coupons` → Gmail cliente → IF notificationEmail → Gmail negocio → Respond `{ claimed: false, couponCode }`
+- **Credenciales**: "Airtable Admin PAT" (HTTP Header) + "Gmail Fluky" (OAuth2)
+- **Anti-duplicado**: busca por `clientId + email` en tabla `coupons` antes de crear
+- **Código generado**: `XXX-XXXXXX` (prefijo 3 letras del clientId + 6 chars random)
+
 ---
 
 ## Campos Airtable — tabla `clients`
@@ -62,12 +71,22 @@
 | `photoPromptText` | text | Texto del prompt de foto |
 | `incentiveEnabled` | boolean | Mostrar pantalla de incentivo |
 | `incentiveText` | text | Texto del incentivo |
+| `notificationEmail` | email | Email del dueño para recibir avisos de cupones |
 | `active` | boolean | Cliente activo (IF lo verifica) |
 | `aiTopics` | multilineText | Temas para prompt IA (uno por línea) |
 | `aiTones` | multilineText | Tonos para prompt IA (uno por línea) |
 | `aiStyles` | multilineText | Estructuras de apertura (uno por línea) |
 | `aiMaxSentences` | number | Máx oraciones en texto IA |
 | `aiExtraInstructions` | text | Instrucciones extra fijas para IA |
+
+## Campos Airtable — tabla `coupons` (`tbljuu3kuNFezEanG`)
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `couponCode` | text | Código único (ej: `HEL-A3F9K2`) — campo primario |
+| `clientId` | text | ID del negocio |
+| `email` | email | Email del cliente que reclamó |
+| `claimedAt` | dateTime | Timestamp del reclamo |
+| `businessName` | text | Nombre del negocio (desnormalizado) |
 
 ---
 

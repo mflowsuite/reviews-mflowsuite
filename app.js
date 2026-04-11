@@ -5,6 +5,7 @@ const CONFIG = {
   N8N_CONFIG_URL:   'https://fluky-n8n.lembgk.easypanel.host/webhook/get-client-config',
   N8N_GENERATE_URL: 'https://fluky-n8n.lembgk.easypanel.host/webhook/generate-review-text',
   N8N_FEEDBACK_URL: 'https://fluky-n8n.lembgk.easypanel.host/webhook/save-feedback',
+  N8N_CLAIM_URL:    'https://fluky-n8n.lembgk.easypanel.host/webhook/claim-incentive',
   POSITIVE_MIN:     4,   // 4+ estrellas = flujo positivo
   PHOTO_MAX_PX:     1200, // máximo px para comprimir imagen
   PHOTO_QUALITY:    0.75, // calidad JPEG (0-1)
@@ -440,6 +441,8 @@ function handleCopyAndOpen() {
                (state.client && state.client.suggestedReviewText) ||
                'Muy buena experiencia, lo recomiendo !!';
 
+  state.copiedReviewText = text;
+
   // 1. Copiar PRIMERO con execCommand (sync — funciona en iOS Safari con user gesture)
   //    iOS requiere: readonly, setSelectionRange, y restaurar scroll
   const ta = document.createElement('textarea');
@@ -463,18 +466,48 @@ function handleCopyAndOpen() {
   const url = state.client && state.client.googleReviewUrl;
   if (url) window.open(url, '_blank');
 
-  // 3. Feedback visual en el botón, luego directo a gracias + incentivo
-  const btn = document.getElementById('copy-open-btn');
-  if (btn) { btn.textContent = '✓ Texto copiado!'; btn.disabled = true; }
-  setTimeout(() => showThankyouPositive(), 1500);
+  // 3. Mostrar pantalla positive-open con preview del texto
+  showScreen('positive-open');
+  const preview = document.getElementById('po-review-preview');
+  const box     = document.getElementById('po-copied-text');
+  if (preview && text) {
+    preview.textContent = text;
+    box.style.display   = 'block';
+  }
 }
 
 function showThankyouPositive() {
   showScreen('thankyou-positive');
-  // Mostrar incentivo después si está habilitado (acepta boolean true o string 'true'/'TRUE')
+  // Mostrar incentive-gate (pide email) si el incentivo está habilitado
   const inc = state.client && state.client.incentiveEnabled;
   if (inc === true || (typeof inc === 'string' && inc.toLowerCase() === 'true')) {
-    setTimeout(() => showScreen('incentive'), 2800);
+    setTimeout(() => showScreen('incentive-gate'), 2800);
+  }
+}
+
+function skipIncentive() {
+  showScreen('thankyou-positive');
+}
+
+async function claimIncentive(email) {
+  const res = await fetch(CONFIG.N8N_CLAIM_URL, {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ clientId: state.clientId, email }),
+  });
+  if (!res.ok) throw new Error('server error');
+  const data = await res.json();
+
+  if (data.claimed) {
+    showScreen('incentive-used');
+  } else {
+    // Mostrar código en pantalla incentive
+    const codeEl = document.getElementById('coupon-code');
+    if (codeEl && data.couponCode) {
+      codeEl.textContent  = data.couponCode;
+      codeEl.style.display = 'block';
+    }
+    showScreen('incentive');
   }
 }
 
@@ -486,6 +519,37 @@ document.addEventListener('DOMContentLoaded', () => {
     e.preventDefault();
     await submitFeedback();
   });
+
+  // Claim incentive form
+  const claimForm = document.getElementById('claim-form');
+  if (claimForm) {
+    claimForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email  = document.getElementById('claim-email').value.trim();
+      const errEl  = document.getElementById('claim-error');
+      const btn    = document.getElementById('claim-btn');
+
+      errEl.style.display = 'none';
+
+      if (!email || !email.includes('@')) {
+        errEl.textContent   = 'Por favor ingresá un email válido.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled    = true;
+      btn.textContent = 'Enviando...';
+
+      try {
+        await claimIncentive(email);
+      } catch {
+        btn.disabled    = false;
+        btn.textContent = 'Reclamar regalo 🎁';
+        errEl.textContent   = 'Hubo un problema. Intentá de nuevo.';
+        errEl.style.display = 'block';
+      }
+    });
+  }
 
   // Listeners de foto (solo si existen en el DOM)
   const photoPosInput = document.getElementById('photo-input-pos');

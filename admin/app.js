@@ -372,6 +372,7 @@ function clearForm() {
     active:             true,
     logoUrl:            '',
     googleReviewUrl:    '',
+    notificationEmail:  '',
     photoUploadEnabled: false,
     photoPromptText:    '',
     incentiveEnabled:   false,
@@ -393,6 +394,7 @@ function populateForm(f) {
   set('f-logoUrl',            f.logoUrl            || '');
   updateLogoPreview(f.logoUrl || '');
   set('f-googleReviewUrl',    f.googleReviewUrl    || '');
+  set('f-notificationEmail',  f.notificationEmail  || '');
   set('f-photoPromptText',    f.photoPromptText    || '');
   set('f-incentiveText',      f.incentiveText      || '');
   set('f-suggestedReviewText',f.suggestedReviewText|| '');
@@ -480,6 +482,7 @@ async function saveClient() {
     active:              document.getElementById('f-active').checked,
     logoUrl:             document.getElementById('f-logoUrl').value.trim(),
     googleReviewUrl:     document.getElementById('f-googleReviewUrl').value.trim(),
+    notificationEmail:   document.getElementById('f-notificationEmail').value.trim(),
     photoUploadEnabled:  document.getElementById('f-photoEnabled').checked,
     photoPromptText:     document.getElementById('f-photoPromptText').value.trim(),
     incentiveEnabled:    document.getElementById('f-incentiveEnabled').checked,
@@ -506,7 +509,7 @@ async function saveClient() {
   }
 
   // ── Limpiar campos vacíos opcionales ──
-  ['logoUrl','googleReviewUrl','photoPromptText','incentiveText',
+  ['logoUrl','googleReviewUrl','notificationEmail','photoPromptText','incentiveText',
    'suggestedReviewText','aiTopics','aiTones','aiStyles','aiExtraInstructions',
    'industry'].forEach(k => {
     if (fields[k] === '') delete fields[k];
