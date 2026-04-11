@@ -206,6 +206,11 @@ function applyBranding(client) {
   // Incentivo
   if (client.incentiveEnabled === true || client.incentiveEnabled === 'TRUE') {
     document.getElementById('incentive-text').textContent = client.incentiveText || '';
+    // Texto personalizado del botón de reclamar
+    const claimBtn = document.getElementById('claim-btn');
+    if (claimBtn && client.incentiveButtonText) {
+      claimBtn.textContent = client.incentiveButtonText;
+    }
   }
 }
 

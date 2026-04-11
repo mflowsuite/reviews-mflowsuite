@@ -375,8 +375,9 @@ function clearForm() {
     notificationEmail:  '',
     photoUploadEnabled: false,
     photoPromptText:    '',
-    incentiveEnabled:   false,
-    incentiveText:      '',
+    incentiveEnabled:      false,
+    incentiveText:         '',
+    incentiveButtonText:   '',
     suggestedReviewText:'',
     aiTopics:           '',
     aiTones:            '',
@@ -396,7 +397,8 @@ function populateForm(f) {
   set('f-googleReviewUrl',    f.googleReviewUrl    || '');
   set('f-notificationEmail',  f.notificationEmail  || '');
   set('f-photoPromptText',    f.photoPromptText    || '');
-  set('f-incentiveText',      f.incentiveText      || '');
+  set('f-incentiveText',         f.incentiveText         || '');
+  set('f-incentiveButtonText',   f.incentiveButtonText   || '');
   set('f-suggestedReviewText',f.suggestedReviewText|| '');
   set('f-aiTopics',           f.aiTopics           || '');
   set('f-aiTones',            f.aiTones            || '');
@@ -485,8 +487,9 @@ async function saveClient() {
     notificationEmail:   document.getElementById('f-notificationEmail').value.trim(),
     photoUploadEnabled:  document.getElementById('f-photoEnabled').checked,
     photoPromptText:     document.getElementById('f-photoPromptText').value.trim(),
-    incentiveEnabled:    document.getElementById('f-incentiveEnabled').checked,
-    incentiveText:       document.getElementById('f-incentiveText').value.trim(),
+    incentiveEnabled:      document.getElementById('f-incentiveEnabled').checked,
+    incentiveText:         document.getElementById('f-incentiveText').value.trim(),
+    incentiveButtonText:   document.getElementById('f-incentiveButtonText').value.trim(),
     suggestedReviewText: document.getElementById('f-suggestedReviewText').value.trim(),
     aiTopics:            document.getElementById('f-aiTopics').value.trim(),
     aiTones:             document.getElementById('f-aiTones').value.trim(),
@@ -509,7 +512,7 @@ async function saveClient() {
   }
 
   // ── Limpiar campos vacíos opcionales ──
-  ['logoUrl','googleReviewUrl','notificationEmail','photoPromptText','incentiveText',
+  ['logoUrl','googleReviewUrl','notificationEmail','photoPromptText','incentiveText','incentiveButtonText',
    'suggestedReviewText','aiTopics','aiTones','aiStyles','aiExtraInstructions',
    'industry'].forEach(k => {
     if (fields[k] === '') delete fields[k];
