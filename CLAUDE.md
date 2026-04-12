@@ -99,8 +99,9 @@
   - DKIM: registro TXT en `resend._domainkey.mflowsuite.com`
   - Registros añadidos via Cloudflare API en la sesión de setup
 - **API keys**:
-  - Workflow F: hardcodeada en nodos HTTP (header `Authorization: Bearer re_...`)
-  - Workflow B (email negativo): clave hardcodeada en nodo Resend del workflow (NO guardar en repo)
+  - Workflow F (`Resend - Send to Client` y `Resend - Send to Business`): clave `re_FvAGk9mM_C...` hardcodeada en header `Authorization` de cada nodo HTTP
+  - Workflow B (`Resend - Email negativo al negocio`): clave distinta, hardcodeada en el nodo
+  - **NUNCA poner claves Resend en archivos del repo** — en abril 2026 una clave quedó expuesta en CLAUDE.md, fue detectada por GitGuardian, revocada y reemplazada. El historial de Git conserva la clave vieja pero es inofensiva (revocada).
 - **Sender**: `"{businessName} <noreply@mflowsuite.com>"` — nombre dinámico por negocio
 - **Emails que se envían**:
   - Al cliente (incentivo): `🎁 Tu regalo de {businessName}` — incentiveText + couponCode + instrucción de canje
@@ -243,8 +244,8 @@ Se llama al inicio en `init()` una vez que se conoce el idioma del cliente.
 ### `screen-positive-open`
 - Instrucciones de pegado: `#po-instruction`, `#po-hint-mobile`, `#po-hint-pc`
 - `#po-copied-text` con `#po-review-preview` — muestra el texto copiado para referencia
-- `#po-open-google-btn` — abre Google Reviews (con animación pulse `btn-ping`)
-- `#po-confirm-btn` → `showThankyouPositive()`
+- `#po-open-google-btn` — abre Google Reviews (con animación pulse `btn-ping`). Al hacer click también revela el botón de confirmación
+- `#po-confirm-btn` → `showThankyouPositive()` — **oculto por defecto** (`display:none`), solo aparece después de hacer click en "Abrir Google Reviews". Evita que el usuario obtenga el incentivo sin haber visitado Google.
 
 ### `screen-incentive-gate`
 - Formulario `#claim-form` con input `#claim-email`
@@ -397,3 +398,5 @@ const ADMIN_CONFIG = {
 - [x] Admin panel — placeholders IA según idioma del cliente.
 - [x] Admin panel — campos vacíos se borran correctamente en Airtable (envían `null`, no se omiten del PATCH).
 - [x] IA en inglés para clientes en-US: prompt con ternario de idioma, `industry` en inglés en Airtable, `aiTopics`/`aiTones`/`aiStyles` en inglés para `distribuidora-cuarso`.
+- [x] Botón "Listo ya lo dejé" oculto hasta que el usuario abra Google Reviews — impide reclamar incentivo sin visitar Google.
+- [x] Seguridad: clave Resend expuesta en CLAUDE.md detectada por GitGuardian, revocada y reemplazada. Workflow F usa clave separada no afectada.
