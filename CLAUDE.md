@@ -17,22 +17,35 @@
 
 ### Workflow A — Get Client Config (`fAmH0SbPDcyyvEV4`)
 - **Webhook**: `GET /webhook/get-client-config?clientId=XXX`
-- **Flujo**: Webhook → Airtable (buscar cliente) → IF activo → Set respuesta → Respond 200
-- **IMPORTANTE**: OpenAI está DESCONECTADO del critical path (nodo huérfano).
-  La respuesta tarda ~1.7s. Si se reconecta OpenAI, la respuesta sube a 5-6s
-  y el celular deja de funcionar (timeout).
-- **Responde**: JSON con todos los campos del cliente incluyendo `incentiveButtonText`
+- **Flujo**: Webhook → Airtable → IF activo → OPEN API (OpenAI) → Set respuesta → Respond 200
+- **IMPORTANTE**: El nodo OpenAI (`OPEN API - Generar texto reseña`) está **CONECTADO** en el critical path.
+  Genera el texto IA en el mismo request de carga. Esto hace la respuesta más lenta (~4-5s) pero
+  precarga el texto para que el usuario no espere al hacer click en "Ayudame".
+  - Si en el futuro la respuesta es demasiado lenta, desconectar el nodo OpenAI y dejarlo como huérfano.
+  - El Set node mapea `suggestedReviewAI` desde `$json.choices?.[0]?.message?.content ?? null`
+- **Prompt del nodo OpenAI (Workflow A)**:
+  - System: instrucciones de estilo (max oraciones, sin signos invertidos, WhatsApp informal)
+  - User: incluye `businessName`, `industry`, `aiTopics`/`aiTones`/`aiStyles` (con Math.random en n8n), `language`, `aiExtraInstructions`
+  - El idioma se pasa como `$json.language` (texto plano, ej: `en-US`) y la IA lo interpreta directamente
+- **Responde**: JSON con todos los campos del cliente incluyendo `suggestedReviewAI`, `incentiveButtonText`
 
 ### Workflow B — Save Feedback (`2RI2HG6j4N2BaU20`)
 - **Webhook**: `POST /webhook/save-feedback`
-- **Flujo**: OPTIONS preflight → Validar → Foto (opcional, imgBB) → Airtable guardar
+- **Flujo**: OPTIONS preflight → Validar → Foto (opcional, imgBB) → Airtable guardar → [Respond 200 || Email negativo]
 - Maneja CORS manualmente (nodo `IF - OPTIONS preflight`)
+- **Email al negocio por reseña negativa** (rating ≤ 3):
+  - Rama paralela después de guardar en Airtable
+  - `IF - Rating negativo` → `HTTP - Get Client Config` (Airtable lookup por clientId) → `IF - Tiene notificationEmail` → `Resend - Email negativo al negocio`
+  - Nodo Resend tiene `continueOnFail: true` para no romper el flujo si falla el email
+  - API key Resend: `re_Bwy4FMNM_M5cUQzVjHwT9PhLpkRs5tRQf` (hardcodeada en el nodo)
 
 ### Workflow C — Admin CRUD (`Daaqa7fMbmWBVDwC`)
 - **Webhook**: `POST /webhook/admin-clients`
-- **Auth**: clave hardcodeada en Code node (no en el repo)
+- **Auth**: clave `Mflow@dmin25` hardcodeada en Code node (no en el repo)
 - **Acciones**: `list`, `save` (create/update por recordId)
 - **Credencial Airtable**: "Airtable Admin PAT" — PAT con permisos read+write
+- **Update**: usa PATCH a Airtable con `{ fields, typecast: true }`
+  - Campos vacíos se envían como `null` (no omitidos) para que Airtable los borre
 
 ### Workflow D — Upload Logo (`GYf9xxqMFW7GxKu9`)
 - **Webhook**: `POST /webhook/upload-logo`
@@ -43,8 +56,11 @@
 ### Workflow E — Generate AI Review Text (`4QwRCImkvX5VdmB0`)
 - **Webhook**: `GET /webhook/generate-review-text?clientId=XXX`
 - **Flujo**: Airtable → IF activo → OpenAI → Respond `{ reviewText: "..." }`
-- Solo se llama cuando el usuario hace click en "Ayudame con el texto"
+- Solo se llama cuando el usuario hace click en "Ayudame con el texto" (si Workflow A no precargó el texto)
 - Tarda 3-5s (tiene OpenAI) — está bien porque el usuario espera activamente
+- **Prompt**: mismo estilo que Workflow A pero usando `String.fromCharCode(10)` para split de líneas
+  y pasando la lista completa a GPT para que elija aleatoriamente (más robusto que Math.random en n8n)
+- **Idioma**: controlado por ternario `language === 'en-US' ? 'You MUST write in English...' : 'Escribe en espanol...'`
 
 ### Workflow F — Claim Incentive (`1u5GwJP3JKKw9HzL`)
 - **Webhook**: `POST /webhook/claim-incentive`
@@ -82,37 +98,40 @@
   - SPF: registro TXT en `mflowsuite.com`
   - DKIM: registro TXT en `resend._domainkey.mflowsuite.com`
   - Registros añadidos via Cloudflare API en la sesión de setup
-- **API key**: guardada directamente en los nodos HTTP de Workflow F (header `Authorization: Bearer re_...`)
+- **API keys**:
+  - Workflow F: hardcodeada en nodos HTTP (header `Authorization: Bearer re_...`)
+  - Workflow B (email negativo): `re_Bwy4FMNM_M5cUQzVjHwT9PhLpkRs5tRQf` (hardcodeada en nodo Resend)
 - **Sender**: `"{businessName} <noreply@mflowsuite.com>"` — nombre dinámico por negocio
 - **Emails que se envían**:
-  - Al cliente: `🎁 Tu regalo de {businessName}` — con incentiveText + couponCode + instrucción de canje
-  - Al negocio: `🎁 Nuevo cupón reclamado — {businessName}` — con email cliente + código + timestamp
+  - Al cliente (incentivo): `🎁 Tu regalo de {businessName}` — incentiveText + couponCode + instrucción de canje
+  - Al negocio (incentivo): `🎁 Nuevo cupón reclamado — {businessName}` — email cliente + código + timestamp
+  - Al negocio (reseña negativa): `⚠️ Nueva reseña negativa — {businessName}` — rating, comentario, nombre, contacto, fecha
 
 ---
 
 ## Campos Airtable — tabla `clients` (`tblxTlomzuupQcgyY`)
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `clientId` | text | Slug único (ej: `heladeria-tinos`) |
-| `businessName` | text | Nombre del negocio |
-| `industry` | text | Rubro (ej: `heladería`) |
-| `language` | text | `es-ES`, `es-AR`, `en-US` |
-| `logoUrl` | text | URL pública del logo |
-| `googleReviewUrl` | text | Link directo a Google Reviews |
-| `accentColor` | text | Hex color (ej: `#00B4D8`) |
-| `suggestedReviewText` | text | Texto estático de fallback para reseña |
-| `photoUploadEnabled` | boolean | Habilitar subida de foto |
-| `photoPromptText` | text | Texto del prompt de foto |
-| `incentiveEnabled` | boolean | Mostrar pantalla de incentivo |
-| `incentiveText` | text | Texto del incentivo (ej: "15% off en tu próxima visita") |
-| `incentiveButtonText` | text | Texto del botón de reclamo (ej: "Reclamar sorpresa 🎁") — si vacío usa default |
-| `notificationEmail` | email | Email del dueño para recibir avisos de cupones reclamados |
-| `active` | boolean | Cliente activo (IF lo verifica) |
-| `aiTopics` | multilineText | Temas para prompt IA (uno por línea) |
-| `aiTones` | multilineText | Tonos para prompt IA (uno por línea) |
-| `aiStyles` | multilineText | Estructuras de apertura (uno por línea) |
-| `aiMaxSentences` | number | Máx oraciones en texto IA |
-| `aiExtraInstructions` | text | Instrucciones extra fijas para IA |
+| Campo | Tipo | Field ID | Descripción |
+|-------|------|----------|-------------|
+| `clientId` | text | `fldAMNKfF4UEMdr0K` | Slug único (ej: `heladeria-tinos`) |
+| `businessName` | text | `fldOy2BlpxEjnZAUt` | Nombre del negocio |
+| `industry` | text | `fldMHVFgzyQ7oVNdf` | Rubro (ej: `heladería`) — usar en inglés para clientes en-US |
+| `language` | singleSelect | `fldMPiZ04bgaiqZIN` | `es-ES`, `es-AR`, `en-US` |
+| `logoUrl` | url | `flduhixQYvoKZaMWF` | URL pública del logo |
+| `googleReviewUrl` | url | `fldAsNW6O750KoqCN` | Link directo a Google Reviews |
+| `accentColor` | text | `fldNq89BSUdJb7t6I` | Hex color (ej: `#00B4D8`) |
+| `suggestedReviewText` | multilineText | `fldO0mEei2S2uPDC0` | Texto estático de fallback para reseña |
+| `photoUploadEnabled` | boolean | `fldddUlFf4ZzeFFuq` | Habilitar subida de foto |
+| `photoPromptText` | text | `fldC7yjqg2T1RzWwd` | Texto del prompt de foto |
+| `incentiveEnabled` | boolean | `fldT7o2B42camXH7Z` | Mostrar pantalla de incentivo |
+| `incentiveText` | multilineText | `fldRD0Zw7Rui7BOD0` | Texto del incentivo (ej: "15% off en tu próxima visita") |
+| `incentiveButtonText` | text | `fldd4XZkl0K4XggyM` | Texto del botón de reclamo — si vacío usa default del T object |
+| `notificationEmail` | email | `fldC3A1LAhfHIhFMa` | Email del dueño para recibir avisos (cupones + reseñas negativas) |
+| `active` | boolean | `fldJKaBd9JeAJb9um` | Cliente activo (IF lo verifica) |
+| `aiTopics` | multilineText | `fldU5aOq973RhvgG9` | Temas para prompt IA (uno por línea) — en el idioma del cliente |
+| `aiTones` | multilineText | `fldwF7YrlsCIz12xl` | Tonos para prompt IA (uno por línea) |
+| `aiStyles` | multilineText | `fldHGda4p9XdE4kc5` | Estructuras de apertura (uno por línea) |
+| `aiMaxSentences` | number | `fldf1kmxQVdnWiyPL` | Máx oraciones en texto IA (default 2) |
+| `aiExtraInstructions` | text | `fldTEox1vjMYbqd9O` | Instrucciones extra fijas para IA |
 
 ## Campos Airtable — tabla `coupons` (`tbljuu3kuNFezEanG`)
 | Campo | Tipo | Descripción |
@@ -143,27 +162,49 @@ const CONFIG = {
 ### Flujo de pantallas
 ```
 loading → [fetch n8n] → rating → confirmRating()
-                                  ├─ (≥4★) → positive-write → [Copiar y abrir Google]
-                                  │                              ↓ handleCopyAndOpen() (sync)
-                                  │                           positive-open (muestra texto copiado)
-                                  │                              ↓ "Ya lo pegué"
-                                  │                           thankyou-positive
-                                  │                              ↓ (si incentiveEnabled, 2.8s)
-                                  │                           incentive-gate (pide email)
-                                  │                              ↓ claimIncentive(email)
-                                  │                           ├─ (claimed: true)  → incentive-used
-                                  │                           └─ (claimed: false) → incentive (cupón + código)
+                                  ├─ (≥4★) → positive-write
+                                  │           ├─ "✨ Ayudame con el texto" → [IA genera texto] → textarea editable
+                                  │           │    ↓ "📋 Copiar texto"  ← handleCopyAndOpen() (sync, solo copia)
+                                  │           └─ "Ir a Google Reviews →" → Google directo sin texto
+                                  │                           ↓
+                                  │                      positive-open (instrucciones de pegado + texto copiado)
+                                  │                           ↓ "🔗 Abrir Google Reviews" → window.open (iOS safe)
+                                  │                           ↓ "✅ Ya lo pegué"
+                                  │                      thankyou-positive
+                                  │                           ↓ (si incentiveEnabled, 2.8s)
+                                  │                      incentive-gate (pide email)
+                                  │                           ↓ claimIncentive(email)
+                                  │                      ├─ (claimed: true)  → incentive-used
+                                  │                      └─ (claimed: false) → incentive (cupón + código)
                                   └─ (<4★) → negative → thankyou-negative
 ```
+
+### i18n — objeto T
+Contiene traducciones para `es-ES`, `es-AR`, `en-US`. Claves principales:
+- `reviewFallback` — texto de reseña de fallback cuando no hay IA ni `suggestedReviewText`
+- `confirmBtn`, `copyBtn`, `aiGenerateBtn`, `directGoogleBtn`, `skipWithoutText`
+- `poHeadline`, `poInstruction`, `poHintMobile`, `poHintPc`, `poOpenGoogleBtn`, `poConfirmBtn`
+- `tyPosHeadline`, `tyPosBody`, `tyPosClosing`
+- `incentiveGateHeadline`, `incentiveGateSubtitle`, `claimBtnDefault`, `skipIncentiveLink`
+- `incentiveUsedHeadline`, `incentiveUsedBody`, `incentiveUsedClosing`
+- `incentiveHint`, `incentiveCloseBtn`
+
+`applyTranslations(lang)` usa `setText()` / `setHtml()` para actualizar el DOM por ID.
+Se llama al inicio en `init()` una vez que se conoce el idioma del cliente.
 
 ### Funciones clave
 
 **`handleCopyAndOpen()`** — **SÍNCRONA** (no async):
-- Copia el texto con `document.execCommand('copy')` + tricks iOS (textarea readonly, setSelectionRange, restaurar scroll)
+- Detecta el idioma del cliente (`state.client.language`) y usa `t.reviewFallback` si no hay texto
+- Copia con `document.execCommand('copy')` + tricks iOS (textarea readonly, setSelectionRange, restaurar scroll)
 - También intenta `navigator.clipboard.writeText` en background para browsers modernos
-- Abre Google Reviews con `window.open(url, '_blank')` dentro del mismo user gesture
-- Guarda texto en `state.copiedReviewText` y lo muestra en `#po-review-preview`
-- Debe permanecer síncrona — si se convierte a async, iOS Safari bloquea el popup y el clipboard
+- NO abre Google — solo copia el texto y muestra `screen-positive-open`
+- Debe permanecer síncrona — si se convierte a async, iOS Safari bloquea el clipboard
+
+**`openGoogleReviews()`** — en `screen-positive-open`, botón con animación pulse:
+- Llama a `window.open(googleReviewUrl, '_blank')` directamente desde el click handler
+- iOS-safe porque es un user gesture directo (no async)
+- El botón `#po-open-google-btn` tiene animación CSS `btn-ping` (pulse continuo)
 
 **`showThankyouPositive()`**:
 - Muestra `screen-thankyou-positive`
@@ -173,10 +214,6 @@ loading → [fetch n8n] → rating → confirmRating()
 - POST a `N8N_CLAIM_URL` con `{ clientId, email }`
 - Si `data.claimed === true` → `showScreen('incentive-used')`
 - Si `data.claimed === false` → setea `#coupon-code` con `data.couponCode` y va a `screen-incentive`
-
-**`skipIncentive()`**:
-- Llamado desde el link "Prefiero no recibirlo" en `screen-incentive-gate`
-- Vuelve a `screen-thankyou-positive`
 
 **`applyBranding(client)`**:
 - Setea `--accent`, logo, nombre del negocio
@@ -189,7 +226,7 @@ loading → [fetch n8n] → rating → confirmRating()
 - El banner `#offline-banner` se muestra cuando carga sin branding
 
 ### Texto IA (generateAIText)
-- El botón "Ayudame con el texto" llama a `N8N_GENERATE_URL` (Workflow E)
+- El botón "Ayudame" llama a `N8N_GENERATE_URL` (Workflow E) si no hay `state.client.suggestedReviewAI` precargado
 - Si falla → usa `suggestedReviewText` de Airtable como fallback
 - La respuesta de Workflow E tiene formato `{ reviewText: "..." }`
 
@@ -197,26 +234,29 @@ loading → [fetch n8n] → rating → confirmRating()
 
 ## Frontend — index.html (pantallas relevantes)
 
+### `screen-positive-write`
+- Botón `#ai-generate-btn` → genera texto con IA
+- Botón `#go-google-direct-btn` → va a Google sin texto (llama `openGoogleDirect()`)
+- Textarea `#review-text` — editable, se llena con texto IA o manual
+- Botón `#copy-open-btn` → copia texto y muestra `positive-open`
+
+### `screen-positive-open`
+- Instrucciones de pegado: `#po-instruction`, `#po-hint-mobile`, `#po-hint-pc`
+- `#po-copied-text` con `#po-review-preview` — muestra el texto copiado para referencia
+- `#po-open-google-btn` — abre Google Reviews (con animación pulse `btn-ping`)
+- `#po-confirm-btn` → `showThankyouPositive()`
+
 ### `screen-incentive-gate`
-- Muestra emoji 🎁, título, subtítulo
 - Formulario `#claim-form` con input `#claim-email`
-- Botón `#claim-btn` con texto configurable (default "Reclamar regalo 🎁")
-- Div `#claim-error` para errores de validación
-- Link "Prefiero no recibirlo" → llama `skipIncentive()`
+- Botón `#claim-btn` con texto configurable (default del T object o `incentiveButtonText` de Airtable)
+- Link `#skip-incentive-link` → llama `skipIncentive()`
 
 ### `screen-incentive-used`
 - Muestra cuando el cliente ya reclamó antes (email duplicado)
-- Emoji 💜, "Ya recibiste este regalo"
 
 ### `screen-incentive`
 - Muestra el cupón con `client.incentiveText`
-- Elemento `#coupon-code` (oculto por defecto) que se llena con el código generado
-- Solo se navega a esta pantalla después de `claimIncentive()` exitoso
-
-### `screen-positive-open`
-- Instrucciones de pegado más grandes (`.paste-instruction`, `.paste-hint`, `.paste-hint-pc`)
-- Div `#po-copied-text` con `#po-review-preview` — muestra el texto copiado para referencia
-- Permite al usuario ver el texto mientras alterna con Google en otro tab
+- `#coupon-code` (oculto por defecto) se llena con el código generado
 
 ---
 
@@ -232,7 +272,7 @@ const ADMIN_CONFIG = {
 
 ### Autenticación
 - Contraseña guardada en `sessionStorage` (no localStorage — se borra al cerrar tab)
-- La contraseña se verifica en el Code node de Workflow C
+- La contraseña se verifica en el Code node de Workflow C (`Mflow@dmin25`)
 
 ### QR Modal
 - Modo día/noche, descargar PNG, imprimir
@@ -244,10 +284,16 @@ const ADMIN_CONFIG = {
 - Envía base64 a Workflow D → GitHub PUT → devuelve URL
 - URL formato: `https://reviews.mflowsuite.com/assets/logos/{timestamp}-{filename}.png`
 
-### Campos del formulario
-Incluye todos los campos de la tabla `clients`. Los relevantes al incentivo:
-- `notificationEmail` — email del dueño del negocio (recibe aviso cuando alguien reclama)
-- `incentiveButtonText` — texto personalizable del botón de reclamo (dentro de `#incentive-fields`)
+### Placeholders IA según idioma
+- `updateAIPlaceholders(lang)` cambia los placeholders de `aiTopics`, `aiTones`, `aiStyles`,
+  `suggestedReviewText`, `aiExtraInstructions` según el idioma seleccionado
+- Se llama al cargar un cliente (`populateForm`) y al cambiar el select `#f-language`
+- Idiomas soportados: `en-US` (ejemplos en inglés) y `default` (español)
+
+### Guardar cliente — campos vacíos
+- Campos opcionales vacíos se envían como `null` (no se omiten) → Airtable los borra
+- `aiMaxSentences` vacío o 0 también se envía como `null`
+- **IMPORTANTE**: Si se hace `delete fields[k]`, Airtable no borra el campo, lo ignora
 
 ---
 
@@ -256,9 +302,9 @@ Incluye todos los campos de la tabla `clients`. Los relevantes al incentivo:
   - "Airtable Admin PAT" — Airtable read+write
   - "GitHub Token" — push a repo
   - "OpenAi Guzel" — OpenAI API
-- **Resend API key**: hardcodeada en nodos HTTP de Workflow F (header Authorization)
+- **Resend API keys**: hardcodeadas en nodos HTTP de Workflow F y B (header Authorization)
 - **Credencial Airtable OAuth2** (Workflow A/E): "Clientes Tiendanube" (ID: `1H9wOKsGsvMbhda0`)
-- **Clave admin**: hardcodeada en Workflow C Code node (no en GitHub)
+- **Clave admin**: `Mflow@dmin25` hardcodeada en Workflow C Code node (no en GitHub)
 - **Archivos gitignoreados**: `n8n-workflow-C-admin-crud.json`, `n8n-workflow-D-upload-logo.json`, `.claude/`
 
 ---
@@ -270,25 +316,28 @@ Incluye todos los campos de la tabla `clients`. Los relevantes al incentivo:
 - Si en el futuro hay problemas de red → configurar dominio propio `n8n.mflowsuite.com`
   como CNAME hacia `fluky-n8n.lembgk.easypanel.host` + configurar en EasyPanel
 
-### OpenAI en critical path
-- **NUNCA reconectar OpenAI al critical path de Workflow A**
-- Con OpenAI: respuesta 5-6s → timeout en mobile (AbortController 12s muy justo en redes lentas)
-- Sin OpenAI: respuesta 1.7s → funciona en cualquier red
-- El texto IA se genera lazy (Workflow E, solo cuando el usuario lo pide)
+### OpenAI en Workflow A
+- El nodo `OPEN API - Generar texto reseña` está **conectado** en el critical path de Workflow A
+- Precarga el texto IA en la respuesta inicial → el usuario no espera al hacer click en "Ayudame"
+- Si la respuesta se vuelve muy lenta (>5s en redes lentas), desconectar el nodo y dejarlo huérfano
+- **NUNCA** reconectar si se observan timeouts en mobile
 
 ### iOS Safari — clipboard y popup
 - `window.open()` y `execCommand('copy')` DEBEN llamarse dentro de un handler síncrono de user gesture
-- Si `handleCopyAndOpen` se vuelve `async` (o usa `await` antes del open/copy), iOS Safari bloquea ambos
-- Solución: usar `document.execCommand('copy')` con un `<textarea readonly>` + `setSelectionRange` + restaurar `scrollY`
-- `navigator.clipboard.writeText` se puede intentar en background (`.catch(() => {})`) como fallback para otros browsers
-- `touchend` listeners deben ser `{ passive: true }` — nunca `passive: false` + `preventDefault`
+- `handleCopyAndOpen` es síncrona — NO agregar `await` antes del copy
+- `openGoogleReviews()` está en un botón separado en `screen-positive-open` — iOS safe
+- Solución clipboard: `<textarea readonly>` + `setSelectionRange` + restaurar `scrollY`
+- `navigator.clipboard.writeText` en background como fallback para otros browsers
 - Usar `min-height: 100dvh` en lugar de `100vh` para el viewport móvil
+
+### n8n — prompt de IA multiline
+- En el campo `jsonBody` de un nodo HTTP, los saltos de línea literales dentro de strings rompen el JSON
+- Para hacer split por líneas en expresiones n8n: usar `String.fromCharCode(10)` en lugar de `'\n'`
+- Alternativa más simple: pasar la lista completa a GPT con `.join(', ')` y pedirle que elija al azar
 
 ### n8n — referencias a nodos no adyacentes
 - En un nodo cuyo input viene de otro nodo (no el anterior directo), `$json` tiene la respuesta del nodo inmediatamente anterior
 - Para referenciar datos de un nodo anterior no adyacente: `$('NombreDelNodo').item.json.campo`
-- Ejemplo en Workflow F: después de `HTTP - Create Coupon`, el `$json` es la respuesta de Airtable.
-  Los datos del cliente están en `$('Code - Build Email').item.json.email` (y otros campos)
 
 ### n8n API
 - `PUT /api/v1/workflows/{id}` requiere solo: `name`, `nodes`, `connections`, `settings`, `staticData`
@@ -300,8 +349,13 @@ Incluye todos los campos de la tabla `clients`. Los relevantes al incentivo:
 - Workflow B y F manejan OPTIONS preflight manualmente (nodo IF + Respond 200)
 - Workflow A/C/D/E: n8n maneja OPTIONS automáticamente
 
-### Airtable
-- La columna `active` puede llegar como `true` (boolean) o `'TRUE'` (string) — el IF node compara con boolean `true`, pero el Set node hace `|| null` como fallback
+### Airtable — borrar campos via PATCH
+- Para borrar un campo: enviar `null` explícitamente
+- Si se omite el campo del payload (delete), Airtable lo deja intacto
+- El admin panel envía `null` para campos vacíos opcionales desde `saveClient()`
+
+### Airtable — otros
+- La columna `active` puede llegar como `true` (boolean) o `'TRUE'` (string)
 - OAuth2 token puede expirar — si Workflow A/E empieza a fallar, verificar credencial en n8n
 
 ### Resend
@@ -317,23 +371,29 @@ Incluye todos los campos de la tabla `clients`. Los relevantes al incentivo:
 ---
 
 ## Clientes actuales
-| clientId | Negocio | Estado |
-|----------|---------|--------|
-| `heladeria-tinos` | Heladería Tino's | Activo ✅ |
+| clientId | Negocio | Idioma | Estado |
+|----------|---------|--------|--------|
+| `heladeria-tinos` | Heladería Tino's | `es-ES` | Activo ✅ |
+| `distribuidora-cuarso` | Distribuidora Cuarso | `en-US` | Activo ✅ |
+| `fluky-blanqueria-mayorista` | Fluky Blanquería Mayorista | `es-AR` | Activo ✅ |
 
 ---
 
 ## Pendientes / Próximos pasos
-- [ ] Panel admin: pantalla para dar de alta clientes sin tocar Airtable directamente
 - [ ] QR por cliente: ya funciona en el modal del admin, falta imprimir físico para Tino's
-- [ ] Workflow A: el nodo "OPEN API" está desconectado (huérfano) — se puede eliminar para limpiar
 - [ ] Resend: si el volumen crece, evaluar upgrade (plan Starter: 50.000/mes por USD 20)
+- [ ] Workflow A: si la respuesta se vuelve lenta, desconectar nodo OpenAI y dejarlo huérfano
 
 ## Completado ✅
-- [x] Prompt IA dinámico para Tino's: campos `aiTopics`, `aiTones`, `aiStyles`, `aiMaxSentences`, `aiExtraInstructions` cargados en Airtable. Workflow E los usa para generar texto variado.
-- [x] Dominio n8n: `fluky-n8n.lembgk.easypanel.host` funciona bien. Solo falla si el usuario tiene una VPN activa en su dispositivo (solución: desactivar VPN). No requiere cambio.
-- [x] Fix iOS/Safari: botón "Copiar y abrir Google" ahora usa `execCommand` síncrono — funciona en iPhone y Mac Safari.
-- [x] Pantalla `positive-open` mejorada: muestra el texto copiado como referencia + instrucciones de pegado más grandes.
+- [x] Prompt IA dinámico: campos `aiTopics`, `aiTones`, `aiStyles`, `aiMaxSentences`, `aiExtraInstructions` en Airtable. Workflows A y E los usan para generar texto variado.
+- [x] i18n completo: objeto T con 3 idiomas (es-ES, es-AR, en-US), `applyTranslations()` cubre todas las pantallas. `reviewFallback` en el idioma correcto del cliente.
+- [x] Dominio n8n: `fluky-n8n.lembgk.easypanel.host` funciona bien. Solo falla si el usuario tiene una VPN activa.
+- [x] Fix iOS/Safari: clipboard y popup separados en dos botones distintos — funciona en iPhone y Mac Safari.
+- [x] UX `screen-positive-open`: instrucciones primero, botón "Abrir Google Reviews" separado con animación pulse. Google se abre DESPUÉS de leer las instrucciones.
+- [x] Pantalla de carga: solo spinner, sin texto (eliminado "Cargando..." para evitar problema de traducción).
 - [x] Sistema de incentivos con anti-duplicado: Workflow F, tabla `coupons`, pantallas `incentive-gate` e `incentive-used`, código de cupón único por reclamo.
-- [x] Notificaciones por email: Resend configurado con dominio `mflowsuite.com`. Email al cliente con código + email al negocio si tiene `notificationEmail`. Remitente muestra el nombre del negocio.
+- [x] Notificaciones por email: Resend con dominio `mflowsuite.com`. Email al cliente (incentivo) + email al negocio (incentivo + reseña negativa). Remitente muestra el nombre del negocio.
 - [x] `incentiveButtonText` configurable por negocio: campo en Airtable, Workflow A lo devuelve, frontend lo aplica, admin puede editarlo.
+- [x] Admin panel — placeholders IA según idioma del cliente.
+- [x] Admin panel — campos vacíos se borran correctamente en Airtable (envían `null`, no se omiten del PATCH).
+- [x] IA en inglés para clientes en-US: prompt con ternario de idioma, `industry` en inglés en Airtable, `aiTopics`/`aiTones`/`aiStyles` en inglés para `distribuidora-cuarso`.
