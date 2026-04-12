@@ -572,9 +572,13 @@ function handleCopyAndOpen() {
 }
 
 // Abre Google Reviews desde screen-positive-open — directo en click handler (iOS safe)
+// Muestra el botón "Listo ya lo dejé" SOLO después de haber abierto Google
 function openGoogleReviews() {
   const url = state.client && state.client.googleReviewUrl;
   if (url) window.open(url, '_blank');
+  // Revelar botón de confirmación solo tras haber ido a Google
+  const confirmBtn = document.getElementById('po-confirm-btn');
+  if (confirmBtn) confirmBtn.style.display = '';
 }
 
 function showThankyouPositive() {
