@@ -46,6 +46,7 @@ const T = {
     poConfirmBtn:          '✅ ¡Listo, ya lo dejé!',
     tyPosHeadline:         '¡Muchas gracias!',
     tyPosBody:             'Tu reseña hace una gran diferencia para nosotros.',
+    tyPosClosing:          '¡Hasta la próxima! 👋',
     negHeadline:           'Lamentamos que no haya sido lo esperado',
     negSubtitle:           'Tu experiencia nos importa. Cuéntanos qué pasó y haremos todo lo posible por mejorar.',
     labelName:             'Tu nombre',
@@ -92,6 +93,7 @@ const T = {
     poConfirmBtn:          '✅ ¡Listo, ya lo dejé!',
     tyPosHeadline:         '¡Gracias de corazón!',
     tyPosBody:             'Tu reseña hace una gran diferencia para nosotros.',
+    tyPosClosing:          '¡Hasta la próxima! 👋',
     negHeadline:           'Lamentamos que no haya sido lo esperado',
     negSubtitle:           'Tu experiencia nos importa. Contanos qué pasó y haremos todo lo posible para mejorar.',
     labelName:             'Tu nombre',
@@ -138,6 +140,7 @@ const T = {
     poConfirmBtn:          '✅ Done, I left my review!',
     tyPosHeadline:         'Thank you so much!',
     tyPosBody:             'Your review makes a huge difference for us.',
+    tyPosClosing:          'See you next time! 👋',
     negHeadline:           'We\'re sorry to hear that',
     negSubtitle:           'Your experience matters to us. Tell us what happened and we\'ll do our best to improve.',
     labelName:             'Your name',
@@ -317,6 +320,7 @@ function applyTranslations(lang) {
   // Thank you positivo
   setText('ty-pos-headline', t.tyPosHeadline);
   setText('ty-pos-body',     t.tyPosBody);
+  setText('ty-pos-closing',  t.tyPosClosing);
 
   // Thank you negativo
   setText('ty-neg-headline', t.tyNegHeadline);
