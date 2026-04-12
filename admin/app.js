@@ -392,6 +392,7 @@ function populateForm(f) {
   set('f-clientId',           f.clientId           || '');
   set('f-industry',           f.industry           || '');
   set('f-language',           f.language           || 'es-ES');
+  updateAIPlaceholders(f.language || 'es-ES');
   set('f-logoUrl',            f.logoUrl            || '');
   updateLogoPreview(f.logoUrl || '');
   set('f-googleReviewUrl',    f.googleReviewUrl    || '');
@@ -428,6 +429,33 @@ function populateForm(f) {
 function set(id, val) {
   const el = document.getElementById(id);
   if (el) el.value = val;
+}
+
+// ── Placeholders IA según idioma ────────────────────────
+const AI_PLACEHOLDERS = {
+  'en-US': {
+    suggestedReviewText: 'E.g.: Amazing ice cream and very friendly service. Totally recommended!',
+    aiTopics:            'E.g.:\nflavor variety\nfriendly service\ncozy atmosphere\nvalue for money',
+    aiTones:             'E.g.:\nenthusiastic\ncasual and friendly\nbrief and direct',
+    aiStyles:            'E.g.:\nStart with the standout thing\nStart with how you felt\nStart with a recommendation',
+    aiExtraInstructions: 'E.g.: Mention the business name naturally.',
+  },
+  default: {
+    suggestedReviewText: 'Ej: Los helados están buenísimos y la atención es muy amable. ¡Lo recomiendo!',
+    aiTopics:            'Ej:\nvariedad de sabores\natención amable\nambiente agradable\nrelación precio-calidad',
+    aiTones:             'Ej:\nentusiasta\ncasual y amigable\nbreve y directo',
+    aiStyles:            'Ej:\nEmpezar por lo que más destacó\nEmpezar con cómo te sentiste\nEmpezar con una recomendación',
+    aiExtraInstructions: 'Ej: Mencionar el nombre del negocio de forma natural.',
+  },
+};
+
+function updateAIPlaceholders(lang) {
+  const ph = AI_PLACEHOLDERS[lang] || AI_PLACEHOLDERS['default'];
+  const fields = ['suggestedReviewText', 'aiTopics', 'aiTones', 'aiStyles', 'aiExtraInstructions'];
+  fields.forEach(f => {
+    const el = document.getElementById('f-' + f);
+    if (el) el.placeholder = ph[f];
+  });
 }
 
 // ── Auto-slug ───────────────────────────────────────────
@@ -564,6 +592,15 @@ function showFormAlert(msg) {
   document.getElementById('inp-password').addEventListener('keydown', e => {
     if (e.key === 'Enter') doLogin();
   });
+
+  // Actualizar placeholders de IA cuando cambia el idioma
+  const langSelect = document.getElementById('f-language');
+  if (langSelect) {
+    langSelect.addEventListener('change', () => updateAIPlaceholders(langSelect.value));
+  }
+
+  // Placeholders iniciales (español por defecto)
+  updateAIPlaceholders('es-ES');
 
   showScreen('login');
 })();

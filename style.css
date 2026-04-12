@@ -581,6 +581,21 @@ h2 {
 }
 .btn-success:hover:not(:disabled) { transform: translateY(-1px); }
 
+/* Botón "Abrir Google Reviews" — animación de atención */
+@keyframes btn-ping {
+  0%   { box-shadow: 0 6px 20px rgba(108,99,255,0.35), 0 0 0 0px rgba(108,99,255,0.55); transform: scale(1); }
+  65%  { box-shadow: 0 8px 26px rgba(108,99,255,0.4),  0 0 0 14px rgba(108,99,255,0);   transform: scale(1.025); }
+  100% { box-shadow: 0 6px 20px rgba(108,99,255,0.35), 0 0 0 0px rgba(108,99,255,0);   transform: scale(1); }
+}
+#po-open-google-btn {
+  animation: btn-ping 1.9s ease-out infinite;
+}
+#po-open-google-btn:hover {
+  animation: none;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(108,99,255,0.5);
+}
+
 .btn-outline {
   background: white;
   color: var(--accent);

@@ -28,6 +28,7 @@ const state = {
    ============================================================ */
 const T = {
   'es-ES': {
+    loadingText:           'Cargando...',
     ratingQuestion:        '¿Cómo ha sido tu visita a {{businessName}}?',
     ratingLabels:          ['', 'Muy mala experiencia', 'Mala experiencia', 'Regular', 'Buena experiencia', '¡Excelente!'],
     confirmBtn:            'Confirmar →',
@@ -75,6 +76,7 @@ const T = {
     errorSend:             'Hubo un problema al enviar. Por favor inténtalo de nuevo.',
   },
   'es-AR': {
+    loadingText:           'Cargando...',
     ratingQuestion:        '¿Cómo fue tu visita a {{businessName}}?',
     ratingLabels:          ['', 'Muy mala experiencia', 'Mala experiencia', 'Regular', 'Buena experiencia', '¡Excelente!'],
     confirmBtn:            'Confirmar →',
@@ -122,6 +124,7 @@ const T = {
     errorSend:             'Hubo un problema al enviar. Por favor intentá de nuevo.',
   },
   'en-US': {
+    loadingText:           'Loading...',
     ratingQuestion:        'How was your visit to {{businessName}}?',
     ratingLabels:          ['', 'Very bad experience', 'Bad experience', 'OK', 'Good experience', 'Excellent!'],
     confirmBtn:            'Confirm →',
@@ -611,6 +614,12 @@ async function claimIncentive(email) {
    FLUJO NEGATIVO — ENVÍO DEL FORMULARIO
    ============================================================ */
 document.addEventListener('DOMContentLoaded', () => {
+  // Traducir pantalla de carga usando el idioma del browser (antes de saber el idioma del cliente)
+  const browserLang = (navigator.language || 'es').toLowerCase();
+  const initLang = browserLang.startsWith('en') ? 'en-US' : 'es-ES';
+  const loadingEl = document.getElementById('loading-text');
+  if (loadingEl) loadingEl.textContent = (T[initLang] || T['es-ES']).loadingText;
+
   document.getElementById('feedback-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     await submitFeedback();
