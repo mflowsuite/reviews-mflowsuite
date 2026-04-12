@@ -539,12 +539,13 @@ async function saveClient() {
     fields.createdAt = new Date().toISOString().split('T')[0];
   }
 
-  // ── Limpiar campos vacíos opcionales ──
+  // ── Campos vacíos → null para que Airtable los borre (no omitir del PATCH) ──
   ['logoUrl','googleReviewUrl','notificationEmail','photoPromptText','incentiveText','incentiveButtonText',
    'suggestedReviewText','aiTopics','aiTones','aiStyles','aiExtraInstructions',
    'industry'].forEach(k => {
-    if (fields[k] === '') delete fields[k];
+    if (fields[k] === '') fields[k] = null;
   });
+  if (!fields.aiMaxSentences || fields.aiMaxSentences < 1) fields.aiMaxSentences = null;
 
   try {
     const data = await callN8n({
