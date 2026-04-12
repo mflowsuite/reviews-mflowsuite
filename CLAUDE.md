@@ -100,7 +100,7 @@
   - Registros añadidos via Cloudflare API en la sesión de setup
 - **API keys**:
   - Workflow F: hardcodeada en nodos HTTP (header `Authorization: Bearer re_...`)
-  - Workflow B (email negativo): `re_Bwy4FMNM_M5cUQzVjHwT9PhLpkRs5tRQf` (hardcodeada en nodo Resend)
+  - Workflow B (email negativo): clave hardcodeada en nodo Resend del workflow (NO guardar en repo)
 - **Sender**: `"{businessName} <noreply@mflowsuite.com>"` — nombre dinámico por negocio
 - **Emails que se envían**:
   - Al cliente (incentivo): `🎁 Tu regalo de {businessName}` — incentiveText + couponCode + instrucción de canje
