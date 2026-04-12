@@ -73,7 +73,7 @@
           <button class="btn btn-primary" id="copy-open-btn" onclick="handleCopyAndOpen()">
             📋 Copiar y abrir Google
           </button>
-          <a href="#" class="skip-link" onclick="openGoogleDirect(); return false;">Ir sin texto</a>
+          <a href="#" id="skip-without-text" class="skip-link" onclick="openGoogleDirect(); return false;">Ir sin texto</a>
         </div>
 
         <!-- Estado: cargando IA -->
@@ -86,20 +86,22 @@
       <!-- SCREEN: positive-open (instrucción para pegar en Google) -->
       <div id="screen-positive-open" class="screen">
         <span class="emoji-display animated-bounce" aria-hidden="true">📋</span>
-        <h2>¡Texto copiado!</h2>
+        <h2 id="po-headline">¡Texto copiado!</h2>
         <div class="instruction-box">
-          <p class="paste-instruction">📌 <strong>Pegá el texto en Google</strong></p>
-          <p class="paste-hint">📱 Mantén pulsado → <strong>Pegar</strong></p>
-          <p class="paste-hint-pc">🖥️ Ctrl+V en PC &nbsp;·&nbsp; Cmd+V en Mac</p>
+          <p id="po-instruction" class="paste-instruction">📌 <strong>Pegá el texto en Google</strong></p>
+          <p id="po-hint-mobile" class="paste-hint">📱 Mantén pulsado → <strong>Pegar</strong></p>
+          <p id="po-hint-pc" class="paste-hint-pc">🖥️ Ctrl+V en PC &nbsp;·&nbsp; Cmd+V en Mac</p>
         </div>
         <div id="po-copied-text" class="copied-text-box" style="display:none">
           <p class="copied-text-label">Tu reseña:</p>
           <p id="po-review-preview" class="review-preview"></p>
         </div>
-        <button class="btn btn-success" onclick="showThankyouPositive()">
+        <button id="po-open-google-btn" class="btn btn-primary" onclick="openGoogleReviews()">
+          🔗 Abrir Google Reviews
+        </button>
+        <button id="po-confirm-btn" class="btn btn-success" onclick="showThankyouPositive()">
           ✅ ¡Listo, ya lo dejé!
         </button>
-        <a href="#" class="skip-link" onclick="showThankyouPositive(); return false;">Cerrar</a>
       </div>
 
       <!-- SCREEN: thankyou-positive -->
@@ -168,8 +170,8 @@
       <!-- SCREEN: incentive-gate (pide email antes de mostrar el cupón) -->
       <div id="screen-incentive-gate" class="screen">
         <span class="emoji-display animated-pop" aria-hidden="true">🎁</span>
-        <h2>¡Hay un regalo para ti!</h2>
-        <p class="subtitle">Ingresa tu email para recibirlo</p>
+        <h2 id="incentive-gate-headline">¡Hay un regalo para ti!</h2>
+        <p class="subtitle" id="incentive-gate-subtitle">Ingresa tu email para recibirlo</p>
         <form id="claim-form" novalidate>
           <div class="field-group">
             <input type="email" id="claim-email" name="claim-email"
@@ -179,15 +181,15 @@
           <div id="claim-error" class="form-error" style="display:none" role="alert"></div>
           <button type="submit" class="btn btn-primary" id="claim-btn">Reclamar regalo 🎁</button>
         </form>
-        <a href="#" class="skip-link" onclick="skipIncentive(); return false;">Prefiero no recibirlo</a>
+        <a href="#" id="skip-incentive-link" class="skip-link" onclick="skipIncentive(); return false;">Prefiero no recibirlo</a>
       </div>
 
       <!-- SCREEN: incentive-used (ya reclamado anteriormente) -->
       <div id="screen-incentive-used" class="screen">
         <span class="emoji-display animated-pop" aria-hidden="true">💜</span>
-        <h2>Ya recibiste este regalo</h2>
-        <p class="subtitle">Anteriormente reclamaste un cupón para este lugar. ¡Gracias por volver!</p>
-        <p class="closing-msg">¡Hasta la próxima! 👋</p>
+        <h2 id="incentive-used-headline">Ya recibiste este regalo</h2>
+        <p class="subtitle" id="incentive-used-body">Anteriormente reclamaste un cupón para este lugar. ¡Gracias por volver!</p>
+        <p class="closing-msg" id="incentive-used-closing">¡Hasta la próxima! 👋</p>
       </div>
 
       <!-- SCREEN: incentive (cupón — aparece si incentiveEnabled=TRUE) -->
@@ -201,9 +203,9 @@
             <p id="coupon-code" class="coupon-code" style="display:none"></p>
           </div>
         </div>
-        <p class="incentive-hint">Mostrá esta pantalla (o el email) en el local para canjearlo 🏪</p>
+        <p id="incentive-hint" class="incentive-hint">Mostrá esta pantalla (o el email) en el local para canjearlo 🏪</p>
 
-        <button class="btn btn-outline" onclick="closePage()">¡Entendido, gracias! 🙏</button>
+        <button id="incentive-close-btn" class="btn btn-outline" onclick="closePage()">¡Entendido, gracias! 🙏</button>
       </div>
 
     </div><!-- /.card -->

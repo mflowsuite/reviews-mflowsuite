@@ -28,88 +28,142 @@ const state = {
    ============================================================ */
 const T = {
   'es-ES': {
-    ratingQuestion:   '¿Cómo ha sido tu visita a {{businessName}}?',
-    ratingLabels:     ['', 'Muy mala experiencia', 'Mala experiencia', 'Regular', 'Buena experiencia', '¡Excelente!'],
-    pwHeadline:       '¡Qué alegría saberlo!',
-    pwSubtitle:       '¿Nos regalas un minuto en Google? Tu opinión ayuda a muchas personas.',
-    pwLabel:          'Aquí tienes un texto para tu reseña — puedes editarlo:',
-    copyOpenBtn:      '📋 Copiar y abrir Google',
-    skipLink:         'Prefiero no hacerlo ahora',
-    tyPosHeadline:    '¡Muchas gracias!',
-    tyPosBody:        'Tu reseña hace una gran diferencia para nosotros.',
-    negHeadline:      'Lamentamos que no haya sido lo esperado',
-    negSubtitle:      'Tu experiencia nos importa. Cuéntanos qué pasó y haremos todo lo posible por mejorar.',
-    labelName:        'Tu nombre',
-    labelContact:     'WhatsApp o email',
-    labelComment:     '¿Qué podríamos mejorar?',
-    phName:           '¿Cómo te llamas?',
-    phContact:        'Para que podamos contactarte',
-    phComment:        'Cuéntanos tu experiencia con confianza, leemos todo...',
-    submitBtn:        'Enviar comentario',
-    submitting:       'Enviando...',
-    tyNegHeadline:    '¡Gracias por avisarnos!',
-    tyNegBody:        'Recibimos tu mensaje. Un miembro de nuestro equipo se pondrá en contacto contigo a la brevedad.',
-    tyNegClosing:     'Gracias por darnos la oportunidad de mejorar 🙌',
-    incentiveHeadline:'¡Un regalo para ti!',
-    photoText:        '📷 Añadir foto (opcional)',
-    errorRequired:    'Por favor completa todos los campos obligatorios.',
-    errorSend:        'Hubo un problema al enviar. Por favor inténtalo de nuevo.',
+    ratingQuestion:        '¿Cómo ha sido tu visita a {{businessName}}?',
+    ratingLabels:          ['', 'Muy mala experiencia', 'Mala experiencia', 'Regular', 'Buena experiencia', '¡Excelente!'],
+    confirmBtn:            'Confirmar →',
+    pwHeadline:            '¡Qué alegría saberlo!',
+    pwSubtitle:            '¿Nos regalas un minuto en Google? Tu opinión ayuda a muchas personas.',
+    pwLabel:               'Aquí tienes un texto para tu reseña — puedes editarlo:',
+    aiGenerateBtn:         '✨ Ayudame con el texto',
+    directGoogleBtn:       'Ir a Google Reviews →',
+    copyBtn:               '📋 Copiar texto',
+    skipWithoutText:       'Ir sin texto',
+    poHeadline:            '¡Texto copiado!',
+    poInstruction:         '📌 Pegá el texto en Google',
+    poHintMobile:          '📱 Mantén pulsado → Pegar',
+    poHintPc:              '🖥️ Ctrl+V en PC · Cmd+V en Mac',
+    poOpenGoogleBtn:       '🔗 Abrir Google Reviews',
+    poConfirmBtn:          '✅ ¡Listo, ya lo dejé!',
+    tyPosHeadline:         '¡Muchas gracias!',
+    tyPosBody:             'Tu reseña hace una gran diferencia para nosotros.',
+    negHeadline:           'Lamentamos que no haya sido lo esperado',
+    negSubtitle:           'Tu experiencia nos importa. Cuéntanos qué pasó y haremos todo lo posible por mejorar.',
+    labelName:             'Tu nombre',
+    labelContact:          'WhatsApp o email',
+    labelComment:          '¿Qué podríamos mejorar?',
+    phName:                '¿Cómo te llamas?',
+    phContact:             'Para que podamos contactarte',
+    phComment:             'Cuéntanos tu experiencia con confianza, leemos todo...',
+    submitBtn:             'Enviar comentario',
+    submitting:            'Enviando...',
+    tyNegHeadline:         '¡Gracias por avisarnos!',
+    tyNegBody:             'Recibimos tu mensaje. Un miembro de nuestro equipo se pondrá en contacto contigo a la brevedad.',
+    tyNegClosing:          'Gracias por darnos la oportunidad de mejorar 🙌',
+    incentiveHeadline:     '¡Un regalo para ti!',
+    incentiveGateHeadline: '¡Hay un regalo para ti!',
+    incentiveGateSubtitle: 'Ingresa tu email para recibirlo',
+    claimBtnDefault:       'Reclamar regalo 🎁',
+    skipIncentiveLink:     'Prefiero no recibirlo',
+    incentiveUsedHeadline: 'Ya recibiste este regalo',
+    incentiveUsedBody:     'Anteriormente reclamaste un cupón para este lugar. ¡Gracias por volver!',
+    incentiveUsedClosing:  '¡Hasta la próxima! 👋',
+    incentiveHint:         'Mostrá esta pantalla (o el email) en el local para canjearlo 🏪',
+    incentiveCloseBtn:     '¡Entendido, gracias! 🙏',
+    photoText:             '📷 Añadir foto (opcional)',
+    errorRequired:         'Por favor completa todos los campos obligatorios.',
+    errorSend:             'Hubo un problema al enviar. Por favor inténtalo de nuevo.',
   },
   'es-AR': {
-    ratingQuestion:   '¿Cómo fue tu visita a {{businessName}}?',
-    ratingLabels:     ['', 'Muy mala experiencia', 'Mala experiencia', 'Regular', 'Buena experiencia', '¡Excelente!'],
-    pwHeadline:       '¡Qué alegría saberlo!',
-    pwSubtitle:       '¿Nos regalás un minuto en Google? Tu opinión ayuda a que más personas nos encuentren.',
-    pwLabel:          'Acá tenés un texto para tu reseña — podés editarlo:',
-    copyOpenBtn:      '📋 Copiar y abrir Google',
-    skipLink:         'Prefiero no hacerlo ahora',
-    tyPosHeadline:    '¡Gracias de corazón!',
-    tyPosBody:        'Tu reseña hace una gran diferencia para nosotros.',
-    negHeadline:      'Lamentamos que no haya sido lo esperado',
-    negSubtitle:      'Tu experiencia nos importa. Contanos qué pasó y haremos todo lo posible para mejorar.',
-    labelName:        'Tu nombre',
-    labelContact:     'WhatsApp o email',
-    labelComment:     '¿Qué podríamos mejorar?',
-    phName:           '¿Cómo te llamás?',
-    phContact:        'Para que podamos contactarte',
-    phComment:        'Contanos tu experiencia con confianza, leemos todo...',
-    submitBtn:        'Enviar comentario',
-    submitting:       'Enviando...',
-    tyNegHeadline:    '¡Gracias por avisarnos!',
-    tyNegBody:        'Recibimos tu mensaje. Un integrante de nuestro equipo se va a comunicar con vos a la brevedad.',
-    tyNegClosing:     'Gracias por darnos la oportunidad de mejorar 🙌',
-    incentiveHeadline:'¡Un regalo para vos!',
-    photoText:        '📷 Agregar foto (opcional)',
-    errorRequired:    'Por favor completá todos los campos obligatorios.',
-    errorSend:        'Hubo un problema al enviar. Por favor intentá de nuevo.',
+    ratingQuestion:        '¿Cómo fue tu visita a {{businessName}}?',
+    ratingLabels:          ['', 'Muy mala experiencia', 'Mala experiencia', 'Regular', 'Buena experiencia', '¡Excelente!'],
+    confirmBtn:            'Confirmar →',
+    pwHeadline:            '¡Qué alegría saberlo!',
+    pwSubtitle:            '¿Nos regalás un minuto en Google? Tu opinión ayuda a que más personas nos encuentren.',
+    pwLabel:               'Acá tenés un texto para tu reseña — podés editarlo:',
+    aiGenerateBtn:         '✨ Ayudame con el texto',
+    directGoogleBtn:       'Ir a Google Reviews →',
+    copyBtn:               '📋 Copiar texto',
+    skipWithoutText:       'Ir sin texto',
+    poHeadline:            '¡Texto copiado!',
+    poInstruction:         '📌 Pegá el texto en Google',
+    poHintMobile:          '📱 Mantén pulsado → Pegar',
+    poHintPc:              '🖥️ Ctrl+V en PC · Cmd+V en Mac',
+    poOpenGoogleBtn:       '🔗 Abrir Google Reviews',
+    poConfirmBtn:          '✅ ¡Listo, ya lo dejé!',
+    tyPosHeadline:         '¡Gracias de corazón!',
+    tyPosBody:             'Tu reseña hace una gran diferencia para nosotros.',
+    negHeadline:           'Lamentamos que no haya sido lo esperado',
+    negSubtitle:           'Tu experiencia nos importa. Contanos qué pasó y haremos todo lo posible para mejorar.',
+    labelName:             'Tu nombre',
+    labelContact:          'WhatsApp o email',
+    labelComment:          '¿Qué podríamos mejorar?',
+    phName:                '¿Cómo te llamás?',
+    phContact:             'Para que podamos contactarte',
+    phComment:             'Contanos tu experiencia con confianza, leemos todo...',
+    submitBtn:             'Enviar comentario',
+    submitting:            'Enviando...',
+    tyNegHeadline:         '¡Gracias por avisarnos!',
+    tyNegBody:             'Recibimos tu mensaje. Un integrante de nuestro equipo se va a comunicar con vos a la brevedad.',
+    tyNegClosing:          'Gracias por darnos la oportunidad de mejorar 🙌',
+    incentiveHeadline:     '¡Un regalo para vos!',
+    incentiveGateHeadline: '¡Hay un regalo para vos!',
+    incentiveGateSubtitle: 'Ingresá tu email para recibirlo',
+    claimBtnDefault:       'Reclamar regalo 🎁',
+    skipIncentiveLink:     'Prefiero no recibirlo',
+    incentiveUsedHeadline: 'Ya recibiste este regalo',
+    incentiveUsedBody:     'Anteriormente reclamaste un cupón para este lugar. ¡Gracias por volver!',
+    incentiveUsedClosing:  '¡Hasta la próxima! 👋',
+    incentiveHint:         'Mostrá esta pantalla (o el email) en el local para canjearlo 🏪',
+    incentiveCloseBtn:     '¡Entendido, gracias! 🙏',
+    photoText:             '📷 Agregar foto (opcional)',
+    errorRequired:         'Por favor completá todos los campos obligatorios.',
+    errorSend:             'Hubo un problema al enviar. Por favor intentá de nuevo.',
   },
   'en-US': {
-    ratingQuestion:   'How was your visit to {{businessName}}?',
-    ratingLabels:     ['', 'Very bad experience', 'Bad experience', 'OK', 'Good experience', 'Excellent!'],
-    pwHeadline:       'So glad to hear it!',
-    pwSubtitle:       'Would you take a minute to share your experience on Google? It helps others find us.',
-    pwLabel:          'Here\'s a suggested review text — feel free to edit it:',
-    copyOpenBtn:      '📋 Copy & Open Google',
-    skipLink:         'Maybe later',
-    tyPosHeadline:    'Thank you so much!',
-    tyPosBody:        'Your review makes a huge difference for us.',
-    negHeadline:      'We\'re sorry to hear that',
-    negSubtitle:      'Your experience matters to us. Tell us what happened and we\'ll do our best to improve.',
-    labelName:        'Your name',
-    labelContact:     'WhatsApp or email',
-    labelComment:     'What could we improve?',
-    phName:           'What\'s your name?',
-    phContact:        'So we can reach out to you',
-    phComment:        'Tell us about your experience, we read everything...',
-    submitBtn:        'Send feedback',
-    submitting:       'Sending...',
-    tyNegHeadline:    'Thanks for letting us know!',
-    tyNegBody:        'We received your message. A member of our team will be in touch shortly.',
-    tyNegClosing:     'Thank you for giving us the chance to improve 🙌',
-    incentiveHeadline:'A gift for you!',
-    photoText:        '📷 Add a photo (optional)',
-    errorRequired:    'Please fill in all required fields.',
-    errorSend:        'Something went wrong. Please try again.',
+    ratingQuestion:        'How was your visit to {{businessName}}?',
+    ratingLabels:          ['', 'Very bad experience', 'Bad experience', 'OK', 'Good experience', 'Excellent!'],
+    confirmBtn:            'Confirm →',
+    pwHeadline:            'So glad to hear it!',
+    pwSubtitle:            'Would you take a minute to share your experience on Google? It helps others find us.',
+    pwLabel:               'Here\'s a suggested review text — feel free to edit it:',
+    aiGenerateBtn:         '✨ Help me write',
+    directGoogleBtn:       'Go to Google Reviews →',
+    copyBtn:               '📋 Copy text',
+    skipWithoutText:       'Skip, go without text',
+    poHeadline:            'Text copied!',
+    poInstruction:         '📌 Paste your text in Google',
+    poHintMobile:          '📱 Long press → Paste',
+    poHintPc:              '🖥️ Ctrl+V on PC · Cmd+V on Mac',
+    poOpenGoogleBtn:       '🔗 Open Google Reviews',
+    poConfirmBtn:          '✅ Done, I left my review!',
+    tyPosHeadline:         'Thank you so much!',
+    tyPosBody:             'Your review makes a huge difference for us.',
+    negHeadline:           'We\'re sorry to hear that',
+    negSubtitle:           'Your experience matters to us. Tell us what happened and we\'ll do our best to improve.',
+    labelName:             'Your name',
+    labelContact:          'WhatsApp or email',
+    labelComment:          'What could we improve?',
+    phName:                'What\'s your name?',
+    phContact:             'So we can reach out to you',
+    phComment:             'Tell us about your experience, we read everything...',
+    submitBtn:             'Send feedback',
+    submitting:            'Sending...',
+    tyNegHeadline:         'Thanks for letting us know!',
+    tyNegBody:             'We received your message. A member of our team will be in touch shortly.',
+    tyNegClosing:          'Thank you for giving us the chance to improve 🙌',
+    incentiveHeadline:     'A gift for you!',
+    incentiveGateHeadline: 'There\'s a gift for you!',
+    incentiveGateSubtitle: 'Enter your email to receive it',
+    claimBtnDefault:       'Claim your gift 🎁',
+    skipIncentiveLink:     'I\'d rather not',
+    incentiveUsedHeadline: 'You already claimed this gift',
+    incentiveUsedBody:     'You previously claimed a reward here. Thanks for coming back!',
+    incentiveUsedClosing:  'See you next time! 👋',
+    incentiveHint:         'Show this screen (or the email) at the venue to redeem your reward 🏪',
+    incentiveCloseBtn:     'Got it, thanks! 🙏',
+    photoText:             '📷 Add a photo (optional)',
+    errorRequired:         'Please fill in all required fields.',
+    errorSend:             'Something went wrong. Please try again.',
   },
 };
 
@@ -229,11 +283,25 @@ function applyTranslations(lang) {
   const setCss  = (id, prop, val) => { const el = document.getElementById(id); if (el) el.style[prop] = val; };
   const setVal  = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
 
+  // Pantalla rating
+  setText('confirm-rating-btn', t.confirmBtn);
+
   // Pantalla positive-write
-  setText('pw-headline', t.pwHeadline);
-  setText('pw-subtitle', t.pwSubtitle);
-  setText('pw-label',    t.pwLabel);
-  setHtml('copy-open-btn', t.copyOpenBtn);
+  setText('pw-headline',        t.pwHeadline);
+  setText('pw-subtitle',        t.pwSubtitle);
+  setText('pw-label',           t.pwLabel);
+  setText('ai-generate-btn',    t.aiGenerateBtn);
+  setText('go-google-direct-btn', t.directGoogleBtn);
+  setHtml('copy-open-btn',      t.copyBtn);
+  setText('skip-without-text',  t.skipWithoutText);
+
+  // Pantalla positive-open
+  setText('po-headline',         t.poHeadline);
+  setText('po-instruction',      t.poInstruction);
+  setText('po-hint-mobile',      t.poHintMobile);
+  setText('po-hint-pc',          t.poHintPc);
+  setText('po-open-google-btn',  t.poOpenGoogleBtn);
+  setText('po-confirm-btn',      t.poConfirmBtn);
 
   // Pantalla negative
   setText('neg-headline',   t.negHeadline);
@@ -255,8 +323,24 @@ function applyTranslations(lang) {
   setText('ty-neg-body',     t.tyNegBody);
   setText('ty-neg-closing',  t.tyNegClosing);
 
-  // Incentivo
+  // Incentivo (pantalla cupón)
   setText('incentive-headline', t.incentiveHeadline);
+  setText('incentive-hint',      t.incentiveHint);
+  setText('incentive-close-btn', t.incentiveCloseBtn);
+
+  // Pantalla incentive-gate
+  setText('incentive-gate-headline', t.incentiveGateHeadline);
+  setText('incentive-gate-subtitle', t.incentiveGateSubtitle);
+  setText('skip-incentive-link',     t.skipIncentiveLink);
+  // claim-btn: usar default del idioma solo si el cliente no tiene texto personalizado
+  if (!(state.client && state.client.incentiveButtonText)) {
+    setText('claim-btn', t.claimBtnDefault);
+  }
+
+  // Pantalla incentive-used
+  setText('incentive-used-headline', t.incentiveUsedHeadline);
+  setText('incentive-used-body',     t.incentiveUsedBody);
+  setText('incentive-used-closing',  t.incentiveUsedClosing);
 
   // Foto prompts
   const photoText = (state.client && state.client.photoPromptText) || t.photoText;
@@ -467,11 +551,8 @@ function handleCopyAndOpen() {
     navigator.clipboard.writeText(text).catch(() => {});
   }
 
-  // 2. Abrir Google (mismo user gesture sync — no bloqueado en Safari)
-  const url = state.client && state.client.googleReviewUrl;
-  if (url) window.open(url, '_blank');
-
-  // 3. Mostrar pantalla positive-open con preview del texto
+  // 2. Mostrar pantalla positive-open con preview del texto
+  // Google se abre desde el botón "Abrir Google Reviews" en esa pantalla (user gesture directo)
   showScreen('positive-open');
   const preview = document.getElementById('po-review-preview');
   const box     = document.getElementById('po-copied-text');
@@ -479,6 +560,12 @@ function handleCopyAndOpen() {
     preview.textContent = text;
     box.style.display   = 'block';
   }
+}
+
+// Abre Google Reviews desde screen-positive-open — directo en click handler (iOS safe)
+function openGoogleReviews() {
+  const url = state.client && state.client.googleReviewUrl;
+  if (url) window.open(url, '_blank');
 }
 
 function showThankyouPositive() {
