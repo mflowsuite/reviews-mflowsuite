@@ -47,13 +47,101 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst email = String(body.email || '').toLowerCase().trim();\nconst password = String(body.password || '').trim();\nconst action = String(body.action || '').trim();\nconst fields = body.fields || null;\n\nif (!email || !password || !action) {\n  throw new Error('email, password and action are required');\n}\nif (action !== 'get' && action !== 'save') {\n  throw new Error('action must be get or save');\n}\n\nconst searchUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY?filterByFormula=' + encodeURIComponent(\"{notificationEmail}='\" + email + \"'\") + '&maxRecords=1';\n\nreturn [{ json: { email, password, action, fields, searchUrl } }];"
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst email = String(body.email || '').toLowerCase().trim();\nconst password = String(body.password || '').trim();\nconst action = String(body.action || '').trim();\nconst fields = body.fields || null;\n\nif (!email || !action) {\n  throw new Error('email and action are required');\n}\nif (!['get', 'save', 'forgot-password'].includes(action)) {\n  throw new Error('invalid action');\n}\n// forgot-password does not require a password\nif (action !== 'forgot-password' && !password) {\n  throw new Error('password is required');\n}\n\nconst searchUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY?filterByFormula=' + encodeURIComponent(\"{notificationEmail}='\" + email + \"'\") + '&maxRecords=1';\n\nreturn [{ json: { email, password, action, fields, searchUrl } }];"
       },
       "id": "code-validate-auth",
       "name": "Code - Validate Auth",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [480, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"id":"c-forgot","leftValue":"={{ $json.action }}","rightValue":"forgot-password","operator":{"type":"string","operation":"equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-forgot",
+      "name": "IF - Forgot Password",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [720, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.searchUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-get-for-forgot",
+      "name": "HTTP - Get Client for Forgot",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 240],
+      "credentials": {"httpHeaderAuth": {"id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT"}},
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const records = $input.first().json.records || [];\nconst prev = $('Code - Validate Auth').item.json;\n\nif (records.length === 0) {\n  // Don't reveal if email exists\n  return [{ json: { ...prev, shouldSendEmail: false } }];\n}\n\nconst fields = records[0].fields;\nconst clientPassword = String(fields.clientPassword || '').trim();\nconst businessName = fields.businessName || 'mflowsuite';\n\nreturn [{ json: { ...prev, shouldSendEmail: true, clientPassword, businessName } }];"
+      },
+      "id": "code-build-forgot-email",
+      "name": "Code - Build Forgot Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 240]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"id":"c-should-send","leftValue":"={{ $json.shouldSendEmail }}","rightValue":true,"operator":{"type":"boolean","operation":"equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-should-send-email",
+      "name": "IF - Should Send Email",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1440, 240]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Authorization", "value": "Bearer re_FvAGk9mM_C8R66dhi7x7SpT5z147NBmwU"}, {"name": "Content-Type", "value": "application/json"}]},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ from: $json.businessName + ' <noreply@mflowsuite.com>', to: [$json.email], subject: '\\uD83D\\uDD11 Tu contrase\\u00F1a de mflowsuite', text: 'Hola!\\n\\nRecibiste este email porque solicitaste recuperar tu contrase\\u00F1a.\\n\\nTu contrase\\u00F1a es: ' + $json.clientPassword + '\\n\\nIngresar en: https://reviews.mflowsuite.com/client/\\n\\nSi no solicitaste esto, ignor\\u00E1 este email.\\n\\n\\u2014 mflowsuite' }) }}",
+        "options": {}
+      },
+      "id": "resend-forgot",
+      "name": "Resend - Send Password Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1680, 160],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"message\": \"ok\"}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {"entries": [{"name": "Access-Control-Allow-Origin", "value": "*"}, {"name": "Content-Type", "value": "application/json"}]}
+        }
+      },
+      "id": "respond-forgot-ok",
+      "name": "Respond - Forgot OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1920, 240]
     },
     {
       "parameters": {
@@ -66,18 +154,18 @@
       "name": "HTTP - Get Client by Email",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [720, 400],
+      "position": [960, 560],
       "credentials": {"httpHeaderAuth": {"id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT"}}
     },
     {
       "parameters": {
-        "jsCode": "const records = $input.first().json.records || [];\nconst prev = $('Code - Validate Auth').item.json;\n\nif (records.length === 0) {\n  return [{ json: { ...prev, notFound: true, recordId: null, client: null } }];\n}\n\nconst record = records[0];\nconst clientFields = record.fields;\n\n// Verify password\nconst storedPassword = String(clientFields.clientPassword || '').trim();\nconst passwordOk = storedPassword === prev.password;\n\nif (!passwordOk) {\n  return [{ json: { ...prev, notFound: false, authFailed: true, recordId: null, client: null } }];\n}\n\n// Build safe client object (exclude clientPassword)\nconst { clientPassword, ...safeFields } = clientFields;\n\nreturn [{ json: { ...prev, notFound: false, authFailed: false, recordId: record.id, client: safeFields } }];"
+        "jsCode": "const records = $input.first().json.records || [];\nconst prev = $('Code - Validate Auth').item.json;\n\nif (records.length === 0) {\n  return [{ json: { ...prev, notFound: true, recordId: null, client: null } }];\n}\n\nconst record = records[0];\nconst clientFields = record.fields;\n\nconst storedPassword = String(clientFields.clientPassword || '').trim();\nconst passwordOk = storedPassword === prev.password;\n\nif (!passwordOk) {\n  return [{ json: { ...prev, notFound: false, authFailed: true, recordId: null, client: null } }];\n}\n\nconst { clientPassword, ...safeFields } = clientFields;\n\nreturn [{ json: { ...prev, notFound: false, authFailed: false, recordId: record.id, client: safeFields } }];"
       },
       "id": "code-verify-auth",
       "name": "Code - Verify Auth",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [960, 400]
+      "position": [1200, 560]
     },
     {
       "parameters": {
@@ -92,7 +180,7 @@
       "name": "IF - Auth Failed",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1200, 400]
+      "position": [1440, 560]
     },
     {
       "parameters": {
@@ -107,7 +195,7 @@
       "name": "Respond - Unauthorized",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1440, 272]
+      "position": [1680, 432]
     },
     {
       "parameters": {
@@ -122,7 +210,7 @@
       "name": "IF - Action Get",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1440, 544]
+      "position": [1680, 688]
     },
     {
       "parameters": {
@@ -137,17 +225,17 @@
       "name": "Respond - Get Client",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [1680, 416]
+      "position": [1920, 560]
     },
     {
       "parameters": {
-        "jsCode": "const prev = $input.first().json;\nconst rawFields = prev.fields || {};\n\n// Fields that cannot be changed by the client\nconst immutable = ['clientId', 'active', 'clientPassword'];\n\nconst filtered = {};\nfor (const [k, v] of Object.entries(rawFields)) {\n  if (immutable.includes(k)) continue;\n  // Convert empty strings to null to clear fields in Airtable\n  filtered[k] = (v === '') ? null : v;\n}\n\nconst updateUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY/' + prev.recordId;\n\nreturn [{ json: { ...prev, filteredFields: filtered, updateUrl } }];"
+        "jsCode": "const prev = $input.first().json;\nconst rawFields = prev.fields || {};\nconst immutable = ['clientId', 'active', 'clientPassword'];\nconst filtered = {};\nfor (const [k, v] of Object.entries(rawFields)) {\n  if (immutable.includes(k)) continue;\n  filtered[k] = (v === '') ? null : v;\n}\nconst updateUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY/' + prev.recordId;\nreturn [{ json: { ...prev, filteredFields: filtered, updateUrl } }];"
       },
       "id": "code-filter-fields",
       "name": "Code - Filter Fields",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1680, 672]
+      "position": [1920, 816]
     },
     {
       "parameters": {
@@ -166,7 +254,7 @@
       "name": "HTTP - Update Airtable",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
-      "position": [1920, 672],
+      "position": [2160, 816],
       "credentials": {"httpHeaderAuth": {"id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT"}}
     },
     {
@@ -182,7 +270,7 @@
       "name": "Respond - Saved",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.1,
-      "position": [2160, 672]
+      "position": [2400, 816]
     },
     {
       "parameters": {
@@ -209,9 +297,24 @@
       ]
     },
     "Code - Validate Auth": {
-      "main": [[{"node": "HTTP - Get Client by Email", "type": "main", "index": 0}]],
+      "main": [[{"node": "IF - Forgot Password", "type": "main", "index": 0}]],
       "error": [[{"node": "Respond - Error", "type": "main", "index": 0}]]
     },
+    "IF - Forgot Password": {
+      "main": [
+        [{"node": "HTTP - Get Client for Forgot", "type": "main", "index": 0}],
+        [{"node": "HTTP - Get Client by Email", "type": "main", "index": 0}]
+      ]
+    },
+    "HTTP - Get Client for Forgot": {"main": [[{"node": "Code - Build Forgot Email", "type": "main", "index": 0}]]},
+    "Code - Build Forgot Email": {"main": [[{"node": "IF - Should Send Email", "type": "main", "index": 0}]]},
+    "IF - Should Send Email": {
+      "main": [
+        [{"node": "Resend - Send Password Email", "type": "main", "index": 0}],
+        [{"node": "Respond - Forgot OK", "type": "main", "index": 0}]
+      ]
+    },
+    "Resend - Send Password Email": {"main": [[{"node": "Respond - Forgot OK", "type": "main", "index": 0}]]},
     "HTTP - Get Client by Email": {"main": [[{"node": "Code - Verify Auth", "type": "main", "index": 0}]]},
     "Code - Verify Auth": {"main": [[{"node": "IF - Auth Failed", "type": "main", "index": 0}]]},
     "IF - Auth Failed": {
