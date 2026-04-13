@@ -61,16 +61,23 @@ async function downloadQR() {
   btn.textContent = 'Descargando…';
   btn.disabled    = true;
   try {
-    // Use the exact URL currently displayed in the img — avoids any dark/light mismatch
-    const imgSrc = document.getElementById('qr-img').src;
-    const isDark = imgSrc.includes('bgcolor=');
-    const res  = await fetch(imgSrc);
-    const blob = await res.blob();
-    const a    = document.createElement('a');
-    a.href     = URL.createObjectURL(blob);
-    a.download = `qr-${qr.slug}${isDark ? '-dark' : ''}.png`;
+    // Usa la URL exacta del img mostrado — evita mismatch dark/light
+    const imgSrc  = document.getElementById('qr-img').src;
+    const isDark  = imgSrc.includes('bgcolor=');
+    const res     = await fetch(imgSrc);
+    const blob    = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a       = document.createElement('a');
+    a.href        = blobUrl;
+    a.download    = `qr-${qr.slug}${isDark ? '-dark' : ''}.png`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(a.href);
+    document.body.removeChild(a);
+    // Revocar después de que la descarga inicie (no inmediatamente)
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+  } catch {
+    // Fallback: abrir en nueva pestaña para descarga manual
+    window.open(document.getElementById('qr-img').src, '_blank');
   } finally {
     btn.textContent = '⬇️ Descargar';
     btn.disabled    = false;

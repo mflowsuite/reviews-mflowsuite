@@ -116,13 +116,20 @@ async function downloadQR() {
   try {
     const imgSrc = document.getElementById('cqr-img').src;
     const isDark = imgSrc.includes('bgcolor=');
-    const res  = await fetch(imgSrc);
-    const blob = await res.blob();
-    const a    = document.createElement('a');
-    a.href     = URL.createObjectURL(blob);
-    a.download = `qr-mipagina${isDark ? '-dark' : ''}.png`;
+    const res     = await fetch(imgSrc);
+    const blob    = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a       = document.createElement('a');
+    a.href        = blobUrl;
+    a.download    = `qr-mipagina${isDark ? '-dark' : ''}.png`;
+    document.body.appendChild(a);
     a.click();
-    URL.revokeObjectURL(a.href);
+    document.body.removeChild(a);
+    // Revocar después de que la descarga inicie (no inmediatamente)
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+  } catch {
+    // Fallback: abrir en nueva pestaña para descarga manual
+    window.open(document.getElementById('cqr-img').src, '_blank');
   } finally {
     btn.textContent = '⬇️ Descargar';
     btn.disabled    = false;
