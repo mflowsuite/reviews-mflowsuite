@@ -47,12 +47,19 @@
       max-width: 440px;
       box-shadow: 0 20px 60px rgba(0,0,0,0.3);
     }
+    .auth-outer {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.2rem;
+      width: 100%;
+      max-width: 440px;
+    }
     .auth-logo {
-      font-size: 1.6rem;
-      font-weight: 800;
-      color: var(--primary);
-      letter-spacing: -0.5px;
-      margin-bottom: 2px;
+      height: 80px;
+      width: auto;
+      border-radius: 14px;
+      display: block;
     }
     .auth-tagline {
       font-size: 0.83rem;
@@ -200,8 +207,9 @@
      PANTALLA: Welcome
 ════════════════════════════════ -->
 <div id="screen-welcome" class="screen active">
+  <div class="auth-outer">
+  <img class="auth-logo" src="../assets/mflowsuite-logo.png" alt="MFlowSuite">
   <div class="auth-card">
-    <div class="auth-logo">mflowsuite</div>
     <div class="auth-tagline">Reseñas que impulsan tu negocio</div>
     <span style="font-size:2.5rem;display:block;margin-bottom:0.75rem">⭐</span>
     <h1>Tu página de reseñas</h1>
@@ -211,14 +219,16 @@
     </button>
     <a class="skip-link" onclick="showAuthScreen('login')">Ya tengo cuenta, entrar</a>
   </div>
+  </div>
 </div>
 
 <!-- ════════════════════════════════
      PANTALLA: Registro
 ════════════════════════════════ -->
 <div id="screen-register" class="screen">
+  <div class="auth-outer">
+  <img class="auth-logo" src="../assets/mflowsuite-logo.png" alt="MFlowSuite">
   <div class="auth-card">
-    <div class="auth-logo">mflowsuite</div>
     <h1>Crear mi página</h1>
     <p class="subtitle-text">Solo tarda un minuto.</p>
 
@@ -236,9 +246,10 @@
       <div class="auth-field">
         <label>Idioma</label>
         <select id="reg-language">
-          <option value="es-AR">🇦🇷 Español — Argentina</option>
-          <option value="es-ES">🇪🇸 Español — España</option>
-          <option value="en-US">🇺🇸 English — US</option>
+          <option value="Español Argentina">🇦🇷 Español — Argentina</option>
+          <option value="Español España">🇪🇸 Español — España</option>
+          <option value="Español Mexicano">🇲🇽 Español — México</option>
+          <option value="Inglés">🇺🇸 English — US</option>
         </select>
       </div>
       <div class="auth-field">
@@ -260,6 +271,7 @@
       <button type="submit" class="btn btn-primary btn-full" id="register-btn">Crear mi página →</button>
     </form>
     <a class="skip-link" onclick="showAuthScreen('welcome')">← Volver</a>
+  </div>
   </div>
 </div>
 
@@ -300,8 +312,9 @@
      PANTALLA: Login
 ════════════════════════════════ -->
 <div id="screen-login" class="screen">
+  <div class="auth-outer">
+  <img class="auth-logo" src="../assets/mflowsuite-logo.png" alt="MFlowSuite">
   <div class="auth-card">
-    <div class="auth-logo">mflowsuite</div>
     <h1>Entrar a mi panel</h1>
     <p class="subtitle-text">Ingresá con tu email y contraseña.</p>
 
@@ -321,14 +334,16 @@
     <a class="skip-link" onclick="showAuthScreen('forgot')">¿Olvidaste tu contraseña?</a>
     <a class="skip-link" onclick="showAuthScreen('welcome')">← Volver</a>
   </div>
+  </div>
 </div>
 
 <!-- ════════════════════════════════
      PANTALLA: Recuperar contraseña
 ════════════════════════════════ -->
 <div id="screen-forgot" class="screen">
+  <div class="auth-outer">
+  <img class="auth-logo" src="../assets/mflowsuite-logo.png" alt="MFlowSuite">
   <div class="auth-card">
-    <div class="auth-logo">mflowsuite</div>
     <h1>Recuperar contraseña</h1>
     <p class="subtitle-text">Te enviaremos tu contraseña al email registrado.</p>
 
@@ -342,6 +357,7 @@
       <button type="submit" class="btn btn-primary btn-full" id="forgot-btn">Enviar contraseña →</button>
     </form>
     <a class="skip-link" onclick="showAuthScreen('login')">← Volver al login</a>
+  </div>
   </div>
 </div>
 
@@ -390,9 +406,10 @@
           <div class="field">
             <label>Idioma</label>
             <select id="f-language">
-              <option value="es-AR">🇦🇷 Español — Argentina</option>
-              <option value="es-ES">🇪🇸 Español — España</option>
-              <option value="en-US">🇺🇸 English — US</option>
+              <option value="Español Argentina">🇦🇷 Español — Argentina</option>
+              <option value="Español España">🇪🇸 Español — España</option>
+              <option value="Español Mexicano">🇲🇽 Español — México</option>
+              <option value="Inglés">🇺🇸 English — US</option>
             </select>
           </div>
           <div class="field">

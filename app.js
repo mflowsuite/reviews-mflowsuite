@@ -123,6 +123,54 @@ const T = {
     errorRequired:         'Por favor completá todos los campos obligatorios.',
     errorSend:             'Hubo un problema al enviar. Por favor intentá de nuevo.',
   },
+  'es-MX': {
+    reviewFallback:        'Muy buena experiencia, ¡lo recomiendo!',
+    ratingQuestion:        '¿Cómo fue tu visita a {{businessName}}?',
+    ratingLabels:          ['', 'Muy mala experiencia', 'Mala experiencia', 'Regular', 'Buena experiencia', '¡Excelente!'],
+    confirmBtn:            'Confirmar →',
+    pwHeadline:            '¡Qué gusto saberlo!',
+    pwSubtitle:            '¿Nos regalas un minuto en Google? Tu opinión ayuda a que más personas nos encuentren.',
+    pwLabel:               'Aquí tienes un texto para tu reseña — puedes editarlo:',
+    aiGenerateBtn:         '✨ Ayúdame con el texto',
+    directGoogleBtn:       'Ir a Google Reviews →',
+    copyBtn:               '📋 Copiar texto',
+    skipWithoutText:       'Ir sin texto',
+    poHeadline:            '¡Texto copiado!',
+    poInstruction:         '📌 Pega el texto en Google',
+    poHintMobile:          '📱 Mantén presionado → Pegar',
+    poHintPc:              '🖥️ Ctrl+V en PC · Cmd+V en Mac',
+    poOpenGoogleBtn:       '🔗 Abrir Google Reviews',
+    poConfirmBtn:          '✅ ¡Listo, ya lo dejé!',
+    tyPosHeadline:         '¡Muchas gracias!',
+    tyPosBody:             'Tu reseña hace una gran diferencia para nosotros.',
+    tyPosClosing:          '¡Hasta pronto! 👋',
+    negHeadline:           'Lamentamos que no haya sido lo esperado',
+    negSubtitle:           'Tu experiencia nos importa. Cuéntanos qué pasó y haremos todo lo posible para mejorar.',
+    labelName:             'Tu nombre',
+    labelContact:          'WhatsApp o email',
+    labelComment:          '¿Qué podríamos mejorar?',
+    phName:                '¿Cómo te llamas?',
+    phContact:             'Para que podamos contactarte',
+    phComment:             'Cuéntanos tu experiencia con confianza, leemos todo...',
+    submitBtn:             'Enviar comentario',
+    submitting:            'Enviando...',
+    tyNegHeadline:         '¡Gracias por avisarnos!',
+    tyNegBody:             'Recibimos tu mensaje. Un integrante de nuestro equipo se pondrá en contacto contigo a la brevedad.',
+    tyNegClosing:          'Gracias por darnos la oportunidad de mejorar 🙌',
+    incentiveHeadline:     '¡Un regalo para ti!',
+    incentiveGateHeadline: '¡Hay un regalo para ti!',
+    incentiveGateSubtitle: 'Ingresa tu email para recibirlo',
+    claimBtnDefault:       'Reclamar regalo 🎁',
+    skipIncentiveLink:     'Prefiero no recibirlo',
+    incentiveUsedHeadline: 'Ya recibiste este regalo',
+    incentiveUsedBody:     'Anteriormente reclamaste un cupón para este lugar. ¡Gracias por regresar!',
+    incentiveUsedClosing:  '¡Hasta pronto! 👋',
+    incentiveHint:         'Muestra esta pantalla (o el email) en el local para canjearlo 🏪',
+    incentiveCloseBtn:     '¡Entendido, gracias! 🙏',
+    photoText:             '📷 Agregar foto (opcional)',
+    errorRequired:         'Por favor completa todos los campos obligatorios.',
+    errorSend:             'Hubo un problema al enviar. Por favor intenta de nuevo.',
+  },
   'en-US': {
     reviewFallback:        'Great experience, I totally recommend it!',
     ratingQuestion:        'How was your visit to {{businessName}}?',
@@ -173,6 +221,14 @@ const T = {
   },
 };
 
+/* Convierte nombres de idioma amigables (almacenados en Airtable) a códigos BCP-47 */
+const LANG_NORMALIZE = {
+  'Inglés':             'en-US',
+  'Español Argentina':  'es-AR',
+  'Español España':     'es-ES',
+  'Español Mexicano':   'es-MX',
+};
+
 const EMOJI_MAP   = { 0:'😐', 1:'😢', 2:'😞', 3:'😕', 4:'😊', 5:'🤩' };
 
 /* ============================================================
@@ -202,6 +258,8 @@ async function init() {
     const data = await res.json();
     if (data.error) throw new Error(data.error);
 
+    // Normalizar idioma: Airtable almacena nombres amigables, T usa códigos BCP-47
+    if (data.language) data.language = LANG_NORMALIZE[data.language] || data.language;
     state.client = data;
     applyBranding(data);
     buildStars();

@@ -103,7 +103,7 @@ function showLoadingScreen(msg) {
 /* ── Placeholders IA según idioma ─────────────── */
 
 const AI_PLACEHOLDERS = {
-  'en-US': {
+  'Inglés': {
     suggestedReviewText: 'E.g.: Amazing service and great quality. Totally recommended!',
     aiTopics:            'E.g.:\nflavor variety\nfriendly service\ncozy atmosphere\nvalue for money',
     aiTones:             'E.g.:\nenthusiastic\ncasual and friendly\nbrief and direct',
@@ -397,7 +397,7 @@ function clearDashboardForm() {
                'f-notificationEmail','f-photoPromptText','f-incentiveText','f-incentiveButtonText',
                'f-suggestedReviewText','f-aiTopics','f-aiTones','f-aiStyles','f-aiExtraInstructions'];
   ids.forEach(id => set(id, ''));
-  set('f-language', 'es-AR');
+  set('f-language', 'Español Argentina');
   set('f-accentColor', '#6C63FF');
   set('f-aiMaxSentences', '2');
   document.getElementById('f-color-picker').value  = '#6C63FF';
@@ -432,8 +432,8 @@ function populateDashboard(client) {
   // Formulario — mismos IDs f-* que el admin
   set('f-businessName',       client.businessName       || '');
   set('f-industry',           client.industry           || '');
-  set('f-language',           client.language           || 'es-AR');
-  updateAIPlaceholders(client.language || 'es-AR');
+  set('f-language',           client.language           || 'Español Argentina');
+  updateAIPlaceholders(client.language || 'Español Argentina');
 
   // Logo
   set('f-logoUrl', client.logoUrl || '');

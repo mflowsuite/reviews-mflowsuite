@@ -391,8 +391,8 @@ function populateForm(f) {
   set('f-businessName',       f.businessName       || '');
   set('f-clientId',           f.clientId           || '');
   set('f-industry',           f.industry           || '');
-  set('f-language',           f.language           || 'es-ES');
-  updateAIPlaceholders(f.language || 'es-ES');
+  set('f-language',           f.language           || 'Español España');
+  updateAIPlaceholders(f.language || 'Español España');
   set('f-logoUrl',            f.logoUrl            || '');
   updateLogoPreview(f.logoUrl || '');
   set('f-googleReviewUrl',    f.googleReviewUrl    || '');
@@ -433,7 +433,7 @@ function set(id, val) {
 
 // ── Placeholders IA según idioma ────────────────────────
 const AI_PLACEHOLDERS = {
-  'en-US': {
+  'Inglés': {
     suggestedReviewText: 'E.g.: Amazing ice cream and very friendly service. Totally recommended!',
     aiTopics:            'E.g.:\nflavor variety\nfriendly service\ncozy atmosphere\nvalue for money',
     aiTones:             'E.g.:\nenthusiastic\ncasual and friendly\nbrief and direct',
@@ -601,7 +601,7 @@ function showFormAlert(msg) {
   }
 
   // Placeholders iniciales (español por defecto)
-  updateAIPlaceholders('es-ES');
+  updateAIPlaceholders('Español España');
 
   showScreen('login');
 })();
