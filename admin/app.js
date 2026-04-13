@@ -61,11 +61,14 @@ async function downloadQR() {
   btn.textContent = 'Descargando…';
   btn.disabled    = true;
   try {
-    const res  = await fetch(qrBuildUrl(qr.slug, qr.dark));
+    // Use the exact URL currently displayed in the img — avoids any dark/light mismatch
+    const imgSrc = document.getElementById('qr-img').src;
+    const isDark = imgSrc.includes('bgcolor=');
+    const res  = await fetch(imgSrc);
     const blob = await res.blob();
     const a    = document.createElement('a');
     a.href     = URL.createObjectURL(blob);
-    a.download = `qr-${qr.slug}${qr.dark ? '-dark' : ''}.png`;
+    a.download = `qr-${qr.slug}${isDark ? '-dark' : ''}.png`;
     a.click();
     URL.revokeObjectURL(a.href);
   } finally {

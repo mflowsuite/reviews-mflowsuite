@@ -199,6 +199,17 @@
     .color-row input[type="text"]  { flex: 1; font-family: monospace; }
     .skip-link { display: block; text-align: center; font-size: 0.85rem; color: var(--muted); margin-top: 0.75rem; cursor: pointer; }
     .skip-link:hover { color: var(--primary); }
+    /* ── Powered-by bar ── */
+    #pb-bar { position:fixed; bottom:1.2rem; left:0; right:0; display:flex; justify-content:center; pointer-events:none; z-index:5; opacity:0; transition:opacity 0.5s; }
+    #pb-bar.pb-visible { opacity:1; }
+    #pb-scene { position:relative; display:inline-block; }
+    #pb-row { display:inline-flex; align-items:center; font:600 12px/1 'Segoe UI',system-ui,sans-serif; white-space:nowrap; user-select:none; gap:0; }
+    #pb-powered { color:rgba(255,255,255,.38); margin-right:2px; }
+    #pb-slot { display:inline-block; width:20px; height:20px; margin:0 4px; flex-shrink:0; vertical-align:middle; }
+    #pb-brand { color:rgba(255,255,255,.38); margin-left:2px; }
+    .pb-ch { display:inline-block; color:rgba(255,255,255,.38); transform-origin:center bottom; will-change:transform,color; }
+    #pb-logo { position:absolute; width:20px; height:20px; left:0; top:0; border-radius:4px; object-fit:cover; transform-origin:center center; pointer-events:none; will-change:transform,opacity; opacity:0; filter:drop-shadow(0 0 0px rgba(60,130,255,0)); transition:filter .4s ease; }
+    #pb-logo.pb-glowing { filter:drop-shadow(0 0 6px rgba(60,130,255,.8)); }
   </style>
 </head>
 <body>
@@ -211,7 +222,7 @@
   <img class="auth-logo" src="../assets/mflowsuite-logo.png" alt="MFlowSuite">
   <div class="auth-card">
     <div class="auth-tagline">Reseñas que impulsan tu negocio</div>
-    <span style="font-size:2.5rem;display:block;margin-bottom:0.75rem">⭐</span>
+    <span style="font-size:1.8rem;display:block;margin-bottom:0.75rem;letter-spacing:3px">⭐⭐⭐⭐⭐</span>
     <h1>Tu página de reseñas</h1>
     <p class="subtitle-text">Crea tu página personalizada y empieza a recibir más reseñas en Google.</p>
     <button class="btn btn-primary btn-full" onclick="showAuthScreen('register')">
@@ -383,11 +394,11 @@
         <h3>🔗 Mi página de reseñas</h3>
         <div class="url-display" id="dash-url" onclick="copyDashUrl()" title="Click para copiar"></div>
         <div class="qr-section">
-          <img id="dash-qr" src="" alt="QR" />
+          <img id="dash-qr" src="" alt="QR" onclick="openQR()" title="Click para ver QR" style="cursor:pointer" />
         </div>
         <div class="qr-actions">
           <a id="dash-url-link" href="#" target="_blank" class="btn btn-outline btn-sm">👁️ Abrir</a>
-          <button class="btn btn-outline btn-sm" onclick="downloadQR()">⬇️ Descargar QR</button>
+          <button class="btn btn-outline btn-sm" onclick="openQR()">📱 Ver QR</button>
         </div>
       </div>
 
@@ -541,6 +552,36 @@
       <button class="btn btn-primary" id="save-btn" onclick="saveDashboard()">Guardar cambios</button>
     </div>
 
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     MODAL: QR
+════════════════════════════════ -->
+<div id="cqr-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center" onclick="closeQR(event)">
+  <div id="cqr-modal-inner" style="background:#fff;border-radius:20px;padding:2rem;max-width:380px;width:90%;text-align:center;box-shadow:0 24px 64px rgba(0,0,0,.4);transition:background .25s,color .25s">
+    <h3 id="cqr-title" style="font-size:1rem;font-weight:700;margin-bottom:1.25rem"></h3>
+    <img id="cqr-img" src="" alt="QR" style="width:100%;max-width:280px;border-radius:10px;display:block;margin:0 auto 1.5rem" />
+    <div style="display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap">
+      <button class="btn btn-outline btn-sm" id="cqr-mode-btn" onclick="toggleQRMode()">🌙 Modo noche</button>
+      <button class="btn btn-outline btn-sm" id="cqr-download-btn" onclick="downloadQR()">⬇️ Descargar</button>
+      <button class="btn btn-outline btn-sm" onclick="printQR()">🖨️ Imprimir</button>
+      <button class="btn btn-primary btn-sm" onclick="closeQR()">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+     Powered-by animation bar
+════════════════════════════════ -->
+<div id="pb-bar">
+  <div id="pb-scene">
+    <div id="pb-row">
+      <span id="pb-powered">Powered by</span>
+      <span id="pb-slot"></span>
+      <span id="pb-chars"></span>
+    </div>
+    <img id="pb-logo" src="../assets/mflowsuite-logo.png" alt="">
   </div>
 </div>
 

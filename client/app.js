@@ -23,6 +23,17 @@ function showScreen(id) {
   const el = document.getElementById('screen-' + id);
   if (el) el.classList.add('active');
   window.scrollTo(0, 0);
+  // Powered-by bar: show on auth screens, hide on dashboard/loading
+  const authScreens = ['welcome', 'login', 'register', 'forgot'];
+  const pbBar = document.getElementById('pb-bar');
+  if (pbBar) {
+    if (authScreens.includes(id)) {
+      pbBar.classList.add('pb-visible');
+      if (typeof startPbAnimation === 'function') startPbAnimation();
+    } else {
+      pbBar.classList.remove('pb-visible');
+    }
+  }
 }
 
 // Para las pantallas de auth (welcome/login/register/forgot) que usan IDs distintos
@@ -55,6 +66,80 @@ function reviewUrl(clientId) {
 
 function qrUrl(url, size) {
   return 'https://api.qrserver.com/v1/create-qr-code/?size=' + (size || '200x200') + '&data=' + encodeURIComponent(url);
+}
+
+/* ── QR Modal ───────────────────────────────── */
+const cqr = { url: '', name: '', dark: false };
+
+function cqrBuildUrl(url, dark) {
+  const colors = dark ? '&color=ffffff&bgcolor=1a1a2e' : '';
+  return `https://api.qrserver.com/v1/create-qr-code/?size=600x600${colors}&data=${encodeURIComponent(url)}`;
+}
+
+function openQR() {
+  cqr.url  = document.getElementById('dash-url').textContent.trim();
+  cqr.name = document.getElementById('topbar-biz-name').textContent.trim() || 'Mi página';
+  cqr.dark = false;
+  const inner = document.getElementById('cqr-modal-inner');
+  document.getElementById('cqr-modal').style.display = 'flex';
+  inner.style.background = '#fff';
+  inner.style.color      = '';
+  inner.querySelectorAll('.btn-outline').forEach(b => { b.style.color = ''; b.style.borderColor = ''; });
+  document.getElementById('cqr-title').textContent    = cqr.name;
+  document.getElementById('cqr-img').src              = cqrBuildUrl(cqr.url, false);
+  document.getElementById('cqr-mode-btn').textContent = '🌙 Modo noche';
+}
+
+function closeQR(e) {
+  if (!e || e.target === document.getElementById('cqr-modal')) {
+    document.getElementById('cqr-modal').style.display = 'none';
+  }
+}
+
+function toggleQRMode() {
+  cqr.dark = !cqr.dark;
+  const inner = document.getElementById('cqr-modal-inner');
+  inner.style.background = cqr.dark ? '#1a1a2e' : '#fff';
+  inner.style.color      = cqr.dark ? '#fff'    : '';
+  inner.querySelectorAll('.btn-outline').forEach(b => {
+    b.style.color       = cqr.dark ? '#fff' : '';
+    b.style.borderColor = cqr.dark ? 'rgba(255,255,255,0.35)' : '';
+  });
+  document.getElementById('cqr-img').src              = cqrBuildUrl(cqr.url, cqr.dark);
+  document.getElementById('cqr-mode-btn').textContent = cqr.dark ? '☀️ Modo día' : '🌙 Modo noche';
+}
+
+async function downloadQR() {
+  const btn = document.getElementById('cqr-download-btn');
+  btn.textContent = 'Descargando…';
+  btn.disabled = true;
+  try {
+    const imgSrc = document.getElementById('cqr-img').src;
+    const isDark = imgSrc.includes('bgcolor=');
+    const res  = await fetch(imgSrc);
+    const blob = await res.blob();
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = `qr-mipagina${isDark ? '-dark' : ''}.png`;
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } finally {
+    btn.textContent = '⬇️ Descargar';
+    btn.disabled    = false;
+  }
+}
+
+function printQR() {
+  const bg  = cqr.dark ? '#1a1a2e' : '#ffffff';
+  const fg  = cqr.dark ? '#ffffff' : '#000000';
+  const url = cqrBuildUrl(cqr.url, cqr.dark);
+  const win = window.open('', '_blank', 'width=520,height=600');
+  win.document.write(`<!DOCTYPE html><html><head><title>QR · ${cqr.name}</title>
+  <style>body{margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;background:${bg};color:${fg};font-family:sans-serif}img{width:380px;height:380px;display:block}p{margin-top:1rem;font-size:1.1rem;font-weight:700;text-align:center}small{font-size:.75rem;opacity:.6;margin-top:.3rem}@media print{body{min-height:unset}}</style></head><body>
+  <img src="${url}" /><p>${cqr.name}</p><small>${cqr.url}</small>
+  <script>window.onload=()=>{window.print();setTimeout(()=>window.close(),800)}<\/script>
+  </body></html>`);
+  win.document.close();
 }
 
 function set(id, val) {
@@ -543,6 +628,158 @@ function downloadQR() {
   a.download = 'qr-reviews.png';
   a.target   = '_blank';
   a.click();
+}
+
+/* ── Powered-by animation ───────────────────── */
+let pbAnimStarted = false;
+function startPbAnimation() {
+  if (pbAnimStarted) return;
+  const logoEl = document.getElementById('pb-logo');
+  if (!logoEl || !logoEl.complete || logoEl.naturalWidth === 0) {
+    if (!logoEl) return;
+    logoEl.onload = () => { pbAnimStarted = false; startPbAnimation(); };
+    return;
+  }
+  pbAnimStarted = true;
+  _runPbAnim();
+}
+
+function _runPbAnim() {
+  const BRAND = 'MFlowSuite';
+  const SZ    = 20;
+  const HOP   = 200, FINAL = 520, SQ = 380, LOSQ = 400, INTRO = 500;
+
+  const sceneEl  = document.getElementById('pb-scene');
+  const rowEl    = document.getElementById('pb-row');
+  const charsEl  = document.getElementById('pb-chars');
+  const slotEl   = document.getElementById('pb-slot');
+  const logoEl   = document.getElementById('pb-logo');
+  if (!sceneEl || !logoEl) return;
+
+  // Build letter spans
+  charsEl.innerHTML = '';
+  const spans = [];
+  for (const ch of BRAND) {
+    const s = document.createElement('span');
+    s.className = 'pb-ch';
+    s.textContent = ch;
+    charsEl.appendChild(s);
+    spans.push(s);
+  }
+
+  const lerp  = (a,b,t) => a+(b-a)*t;
+  const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
+  const arc   = (t,h)   => 4*h*t*(1-t);
+
+  function spring(t) {
+    if (t<.15){const r=t/.15;      return [lerp(1,1.35,r),  lerp(1,.55,r)];}
+    if (t<.40){const r=(t-.15)/.25;return [lerp(1.35,.88,r),lerp(.55,1.22,r)];}
+    if (t<.70){const r=(t-.40)/.30;return [lerp(.88,1.04,r),lerp(1.22,.96,r)];}
+    const r=(t-.70)/.30;           return [lerp(1.04,1,r),  lerp(.96,1,r)];
+  }
+  function airShape(t) {
+    if (t<.45) return [lerp(1,.84,t/.45),   lerp(1,1.2,t/.45)];
+    if (t<.82) return [.84,1.2];
+    const r=(t-.82)/.18;
+    return [lerp(.84,1.28,r),lerp(1.2,.68,r)];
+  }
+  function center(el) {
+    const er=el.getBoundingClientRect(), sr=sceneEl.getBoundingClientRect();
+    return { x:er.left-sr.left+er.width/2, y:er.top-sr.top+er.height/2 };
+  }
+  function moveLogo(cx,cy,sx,sy,rot,alpha) {
+    const tx=cx-SZ/2, ty=cy-SZ/2;
+    logoEl.style.transform=`translate(${tx}px,${ty}px) rotate(${rot}rad) scale(${sx},${sy})`;
+    logoEl.style.opacity=alpha;
+  }
+
+  let phase='intro', t0=null, hopIdx=0, hop=null;
+  const lsq   = spans.map(()=>({at:-1}));
+  let lsqAt=-1, lsX=1, lsY=1;
+
+  function triggerLogoSq(now){lsqAt=now;lsX=1.3;lsY=0.62;}
+  function startHop(from,to,h,dur,now){hop={from:{...from},to:{...to},h,dur,t0:now};}
+
+  rowEl.style.opacity='0';
+  moveLogo(-300,0,1,1,0,0);
+
+  function frame(now) {
+    if (!t0) t0=now;
+    const el=now-t0;
+
+    // Letter squishes
+    for (let i=0;i<spans.length;i++) {
+      if (lsq[i].at<0) continue;
+      const t=clamp((now-lsq[i].at)/SQ,0,1);
+      const [sx,sy]=spring(t);
+      spans[i].style.transform=`scaleX(${sx}) scaleY(${sy})`;
+      spans[i].style.color=t<.28?'rgba(110,168,255,.9)':'rgba(255,255,255,.38)';
+      if (t>=1){lsq[i].at=-1;spans[i].style.transform='';spans[i].style.color='';}
+    }
+    // Logo squish
+    if (lsqAt>=0) {
+      const t=clamp((now-lsqAt)/LOSQ,0,1);
+      const [sx,sy]=spring(t);
+      lsX=sx;lsY=sy;
+      if (t>=1){lsqAt=-1;lsX=lsY=1;}
+    }
+
+    if (phase==='intro') {
+      const t=clamp(el/INTRO,0,1);
+      rowEl.style.opacity=t;
+      moveLogo(-300,0,1,1,0,0);
+      if (t>=1) {
+        const lpos=spans.map(center), spos=center(slotEl);
+        const last=spans.length-1;
+        phase='hopping'; hopIdx=last; t0=now;
+        startHop({x:lpos[last].x+60,y:spos.y},{x:lpos[last].x,y:spos.y},38,HOP,now);
+        // store positions for later use
+        frame._lpos=lpos; frame._spos=spos;
+      }
+    } else if (phase==='hopping') {
+      const lpos=frame._lpos, spos=frame._spos;
+      if (hop) {
+        const ht=clamp((now-hop.t0)/hop.dur,0,1);
+        const lx=lerp(hop.from.x,hop.to.x,ht);
+        const ly=lerp(hop.from.y,hop.to.y,ht)-arc(ht,hop.h);
+        const rot=(ht<.5?1:-1)*Math.sin(Math.PI*ht)*.22;
+        const [sx,sy]=lsqAt>=0?[lsX,lsY]:airShape(ht);
+        moveLogo(lx,ly,sx,sy,rot,1);
+        if (ht>=1) {
+          lsq[hopIdx].at=now; triggerLogoSq(now);
+          const fx=hop.to.x, fy=hop.to.y;
+          hopIdx--;
+          if (hopIdx>=0) {
+            startHop({x:fx,y:fy},{x:lpos[hopIdx].x,y:spos.y},38,HOP,now);
+          } else {
+            phase='final'; t0=now;
+            startHop({x:fx,y:fy},{x:spos.x,y:spos.y},70,FINAL,now);
+          }
+        }
+      }
+    } else if (phase==='final') {
+      const spos=frame._spos;
+      if (hop) {
+        const ht=clamp((now-hop.t0)/hop.dur,0,1);
+        const lx=lerp(hop.from.x,hop.to.x,ht);
+        const ly=lerp(hop.from.y,hop.to.y,ht)-arc(ht,hop.h);
+        const rot=(ht<.5?1:-1)*Math.sin(Math.PI*ht)*.18;
+        const [sx,sy]=lsqAt>=0?[lsX,lsY]:airShape(ht);
+        moveLogo(lx,ly,sx,sy,rot,1);
+        if (ht>=1) {
+          phase='settled'; t0=now; triggerLogoSq(now);
+          moveLogo(spos.x,spos.y,lsX,lsY,0,1);
+          logoEl.classList.add('pb-glowing');
+        }
+      }
+    } else if (phase==='settled') {
+      const spos=frame._spos;
+      moveLogo(spos.x,spos.y,lsX,lsY,0,1);
+      return; // stop rAF
+    }
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
 }
 
 /* ── n8n call ───────────────────────────────── */
