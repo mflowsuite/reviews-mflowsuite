@@ -1,0 +1,234 @@
+{
+  "name": "Reseñas - H: Client Dashboard",
+  "nodes": [
+    {
+      "parameters": {"httpMethod":"POST","path":"client-dashboard","responseMode":"responseNode","options":{}},
+      "id": "webhook-dashboard",
+      "name": "Webhook POST",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 304],
+      "webhookId": "b2c3d4e5-f6a7-8901-bcde-dashboard5678"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "loose"},
+          "conditions": [{"id":"c-options","leftValue":"={{ $json.headers['request-method'] ?? $json.method ?? '' }}","rightValue":"OPTIONS","operator":{"type":"string","operation":"equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-options",
+      "name": "IF - OPTIONS preflight",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [240, 304]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {"name": "Access-Control-Allow-Origin", "value": "*"},
+              {"name": "Access-Control-Allow-Methods", "value": "POST, OPTIONS"},
+              {"name": "Access-Control-Allow-Headers", "value": "Content-Type"}
+            ]
+          }
+        }
+      },
+      "id": "respond-preflight",
+      "name": "Respond - Preflight OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [480, 160]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst email = String(body.email || '').toLowerCase().trim();\nconst password = String(body.password || '').trim();\nconst action = String(body.action || '').trim();\nconst fields = body.fields || null;\n\nif (!email || !password || !action) {\n  throw new Error('email, password and action are required');\n}\nif (action !== 'get' && action !== 'save') {\n  throw new Error('action must be get or save');\n}\n\nconst searchUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY?filterByFormula=' + encodeURIComponent(\"{notificationEmail}='\" + email + \"'\") + '&maxRecords=1';\n\nreturn [{ json: { email, password, action, fields, searchUrl } }];"
+      },
+      "id": "code-validate-auth",
+      "name": "Code - Validate Auth",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.searchUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-get-client",
+      "name": "HTTP - Get Client by Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 400],
+      "credentials": {"httpHeaderAuth": {"id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT"}}
+    },
+    {
+      "parameters": {
+        "jsCode": "const records = $input.first().json.records || [];\nconst prev = $('Code - Validate Auth').item.json;\n\nif (records.length === 0) {\n  return [{ json: { ...prev, notFound: true, recordId: null, client: null } }];\n}\n\nconst record = records[0];\nconst clientFields = record.fields;\n\n// Verify password\nconst storedPassword = String(clientFields.clientPassword || '').trim();\nconst passwordOk = storedPassword === prev.password;\n\nif (!passwordOk) {\n  return [{ json: { ...prev, notFound: false, authFailed: true, recordId: null, client: null } }];\n}\n\n// Build safe client object (exclude clientPassword)\nconst { clientPassword, ...safeFields } = clientFields;\n\nreturn [{ json: { ...prev, notFound: false, authFailed: false, recordId: record.id, client: safeFields } }];"
+      },
+      "id": "code-verify-auth",
+      "name": "Code - Verify Auth",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"id":"c-not-found","leftValue":"={{ $json.notFound || $json.authFailed }}","rightValue":true,"operator":{"type":"boolean","operation":"equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-auth-failed",
+      "name": "IF - Auth Failed",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\": \"invalid_credentials\"}",
+        "options": {
+          "responseCode": 401,
+          "responseHeaders": {"entries": [{"name": "Access-Control-Allow-Origin", "value": "*"}, {"name": "Content-Type", "value": "application/json"}]}
+        }
+      },
+      "id": "respond-unauthorized",
+      "name": "Respond - Unauthorized",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1440, 272]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"id":"c-action-get","leftValue":"={{ $json.action }}","rightValue":"get","operator":{"type":"string","operation":"equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-action-get",
+      "name": "IF - Action Get",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1440, 544]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ client: $json.client }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {"entries": [{"name": "Access-Control-Allow-Origin", "value": "*"}, {"name": "Content-Type", "value": "application/json"}]}
+        }
+      },
+      "id": "respond-get",
+      "name": "Respond - Get Client",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1680, 416]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $input.first().json;\nconst rawFields = prev.fields || {};\n\n// Fields that cannot be changed by the client\nconst immutable = ['clientId', 'active', 'clientPassword'];\n\nconst filtered = {};\nfor (const [k, v] of Object.entries(rawFields)) {\n  if (immutable.includes(k)) continue;\n  // Convert empty strings to null to clear fields in Airtable\n  filtered[k] = (v === '') ? null : v;\n}\n\nconst updateUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY/' + prev.recordId;\n\nreturn [{ json: { ...prev, filteredFields: filtered, updateUrl } }];"
+      },
+      "id": "code-filter-fields",
+      "name": "Code - Filter Fields",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 672]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "={{ $json.updateUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ fields: $json.filteredFields, typecast: true }) }}",
+        "options": {}
+      },
+      "id": "http-update-record",
+      "name": "HTTP - Update Airtable",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 672],
+      "credentials": {"httpHeaderAuth": {"id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT"}}
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"message\": \"saved\"}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {"entries": [{"name": "Access-Control-Allow-Origin", "value": "*"}, {"name": "Content-Type", "value": "application/json"}]}
+        }
+      },
+      "id": "respond-saved",
+      "name": "Respond - Saved",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2160, 672]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\": \"Invalid request\"}",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {"entries": [{"name": "Access-Control-Allow-Origin", "value": "*"}]}
+        }
+      },
+      "id": "respond-error",
+      "name": "Respond - Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 672]
+    }
+  ],
+  "connections": {
+    "Webhook POST": {"main": [[{"node": "IF - OPTIONS preflight", "type": "main", "index": 0}]]},
+    "IF - OPTIONS preflight": {
+      "main": [
+        [{"node": "Respond - Preflight OK", "type": "main", "index": 0}],
+        [{"node": "Code - Validate Auth", "type": "main", "index": 0}]
+      ]
+    },
+    "Code - Validate Auth": {
+      "main": [[{"node": "HTTP - Get Client by Email", "type": "main", "index": 0}]],
+      "error": [[{"node": "Respond - Error", "type": "main", "index": 0}]]
+    },
+    "HTTP - Get Client by Email": {"main": [[{"node": "Code - Verify Auth", "type": "main", "index": 0}]]},
+    "Code - Verify Auth": {"main": [[{"node": "IF - Auth Failed", "type": "main", "index": 0}]]},
+    "IF - Auth Failed": {
+      "main": [
+        [{"node": "Respond - Unauthorized", "type": "main", "index": 0}],
+        [{"node": "IF - Action Get", "type": "main", "index": 0}]
+      ]
+    },
+    "IF - Action Get": {
+      "main": [
+        [{"node": "Respond - Get Client", "type": "main", "index": 0}],
+        [{"node": "Code - Filter Fields", "type": "main", "index": 0}]
+      ]
+    },
+    "Code - Filter Fields": {"main": [[{"node": "HTTP - Update Airtable", "type": "main", "index": 0}]]},
+    "HTTP - Update Airtable": {"main": [[{"node": "Respond - Saved", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"},
+  "staticData": null
+}

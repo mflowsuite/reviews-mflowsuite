@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#6C63FF" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Mi página de reseñas — mflowsuite</title>
+  <link rel="stylesheet" href="../style.css" />
+  <style>
+    /* Portal-specific overrides */
+    .portal-logo {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--accent, #6C63FF);
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+    .portal-tagline {
+      font-size: 13px;
+      color: #888;
+      margin-bottom: 24px;
+    }
+    .field-group input[type="color"] {
+      height: 40px;
+      padding: 4px 8px;
+      cursor: pointer;
+    }
+    .section-block {
+      background: #f8f8ff;
+      border: 1px solid #e8e8f0;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #444;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .qr-section {
+      text-align: center;
+      padding: 16px;
+    }
+    .qr-section img {
+      width: 160px;
+      height: 160px;
+      border-radius: 8px;
+      border: 1px solid #e0e0e0;
+    }
+    .url-display {
+      font-size: 12px;
+      color: #6C63FF;
+      word-break: break-all;
+      background: #f0f0ff;
+      padding: 8px 12px;
+      border-radius: 8px;
+      margin: 8px 0;
+      cursor: pointer;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-row .btn {
+      flex: 1;
+      min-width: 120px;
+    }
+    .setup-url-box {
+      background: #f0f0ff;
+      border: 2px dashed #6C63FF;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+      margin: 12px 0;
+    }
+    .setup-url-box .url-label {
+      font-size: 12px;
+      color: #888;
+      margin-bottom: 4px;
+    }
+    .setup-url-box .url-value {
+      font-size: 14px;
+      font-weight: 700;
+      color: #6C63FF;
+      word-break: break-all;
+      cursor: pointer;
+    }
+    .setup-preview {
+      background: #fff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 13px;
+      color: #555;
+      font-style: italic;
+      margin: 8px 0;
+    }
+    .portal-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .portal-nav .business-name {
+      font-weight: 700;
+      font-size: 15px;
+      color: #333;
+    }
+    .btn-logout {
+      font-size: 12px;
+      background: none;
+      border: 1px solid #ddd;
+      color: #888;
+      padding: 4px 12px;
+      border-radius: 20px;
+      cursor: pointer;
+    }
+    .btn-logout:hover { background: #f5f5f5; }
+    .save-status {
+      font-size: 12px;
+      color: #4CAF50;
+      text-align: center;
+      height: 20px;
+      transition: opacity 0.3s;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page-bg" id="page-bg"></div>
+
+  <main class="card-wrap">
+    <div class="card">
+
+      <!-- SCREEN: welcome -->
+      <div id="screen-welcome" class="screen active">
+        <div class="portal-logo">mflowsuite</div>
+        <div class="portal-tagline">Reseñas que impulsan tu negocio</div>
+        <span class="emoji-display" aria-hidden="true">⭐</span>
+        <h2>Tu página de reseñas</h2>
+        <p class="subtitle">Crea tu página personalizada y empieza a recibir más reseñas en Google.</p>
+        <button class="btn btn-primary" onclick="showScreen('screen-register')">
+          Crear mi página →
+        </button>
+        <a href="#" class="skip-link" onclick="showScreen('screen-login'); return false;">
+          Ya tengo cuenta, entrar
+        </a>
+      </div>
+
+      <!-- SCREEN: register -->
+      <div id="screen-register" class="screen">
+        <div class="portal-logo">mflowsuite</div>
+        <h2>Crear mi página</h2>
+        <form id="register-form" novalidate>
+          <div class="field-group">
+            <label for="reg-business-name">Nombre del negocio *</label>
+            <input type="text" id="reg-business-name" placeholder="Ej: Heladería Tino's" required />
+          </div>
+          <div class="field-group">
+            <label for="reg-industry">Rubro *</label>
+            <input type="text" id="reg-industry" placeholder="Ej: heladería, restaurante, tienda de ropa" required />
+          </div>
+          <div class="field-group">
+            <label for="reg-language">Idioma</label>
+            <select id="reg-language">
+              <option value="es-AR">Español (Argentina)</option>
+              <option value="es-ES">Español (España)</option>
+              <option value="en-US">English (US)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="reg-google-url">Link de Google Reviews <span class="optional-tag">(opcional)</span></label>
+            <input type="url" id="reg-google-url" placeholder="https://g.page/r/..." />
+          </div>
+          <div class="field-group">
+            <label for="reg-email">Email *</label>
+            <input type="email" id="reg-email" placeholder="tu@email.com" autocomplete="email" required />
+          </div>
+          <div class="field-group">
+            <label for="reg-password">Contraseña * <span class="optional-tag">(mín. 6 caracteres)</span></label>
+            <input type="password" id="reg-password" placeholder="••••••••" autocomplete="new-password" required />
+          </div>
+          <div class="field-group">
+            <label for="reg-ai-hint">¿Qué destacarías de tu negocio? <span class="optional-tag">(opcional)</span></label>
+            <textarea id="reg-ai-hint" rows="2" maxlength="200" placeholder="Ej: Los clientes nos eligen por la atención personalizada y los precios accesibles"></textarea>
+          </div>
+          <div id="register-error" class="form-error" style="display:none" role="alert"></div>
+          <button type="submit" class="btn btn-primary" id="register-btn">
+            Crear mi página →
+          </button>
+        </form>
+        <a href="#" class="skip-link" onclick="showScreen('screen-welcome'); return false;">← Volver</a>
+      </div>
+
+      <!-- SCREEN: register loading -->
+      <div id="screen-register-loading" class="screen">
+        <div class="loader-ring"></div>
+        <p class="loading-text">Configurando tu página con IA…</p>
+        <p class="subtitle" style="font-size:13px;color:#888">Puede tardar unos segundos</p>
+      </div>
+
+      <!-- SCREEN: setup-done -->
+      <div id="screen-setup-done" class="screen">
+        <span class="emoji-display animated-pop" aria-hidden="true">🎉</span>
+        <h2>¡Tu página está lista!</h2>
+        <div class="setup-url-box">
+          <div class="url-label">Compartí este link con tus clientes</div>
+          <div class="url-value" id="setup-url" onclick="copySetupUrl()">—</div>
+        </div>
+        <div class="qr-section">
+          <img id="setup-qr" src="" alt="QR code" />
+          <p style="font-size:12px;color:#888;margin-top:6px">Imprimí este QR para tu local</p>
+        </div>
+        <p class="subtitle" style="font-size:13px">Texto de reseña generado por IA:</p>
+        <div class="setup-preview" id="setup-preview-text">—</div>
+        <button class="btn btn-primary" onclick="goToDashboard()">Ir a mi panel →</button>
+      </div>
+
+      <!-- SCREEN: login -->
+      <div id="screen-login" class="screen">
+        <div class="portal-logo">mflowsuite</div>
+        <h2>Entrar a mi panel</h2>
+        <form id="login-form" novalidate>
+          <div class="field-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" placeholder="tu@email.com" autocomplete="email" required />
+          </div>
+          <div class="field-group">
+            <label for="login-password">Contraseña</label>
+            <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password" required />
+          </div>
+          <div id="login-error" class="form-error" style="display:none" role="alert"></div>
+          <button type="submit" class="btn btn-primary" id="login-btn">Entrar →</button>
+        </form>
+        <a href="#" class="skip-link" onclick="showScreen('screen-welcome'); return false;">← Volver</a>
+      </div>
+
+      <!-- SCREEN: dashboard -->
+      <div id="screen-dashboard" class="screen">
+        <div class="portal-nav">
+          <div class="business-name" id="dash-business-name">Mi negocio</div>
+          <button class="btn-logout" onclick="doLogout()">Salir</button>
+        </div>
+
+        <!-- QR / URL -->
+        <div class="section-block">
+          <div class="section-title">🔗 Mi página de reseñas</div>
+          <div class="url-display" id="dash-url" onclick="copyDashUrl()">—</div>
+          <div class="qr-section" style="padding:8px 0">
+            <img id="dash-qr" src="" alt="QR code" style="width:120px;height:120px" />
+          </div>
+          <div class="btn-row">
+            <a id="dash-url-link" href="#" target="_blank" class="btn btn-outline" style="text-align:center;font-size:13px">Abrir página</a>
+            <button class="btn btn-outline" style="font-size:13px" onclick="downloadQR()">Descargar QR</button>
+          </div>
+        </div>
+
+        <!-- Sección: Mi negocio -->
+        <div class="section-block">
+          <div class="section-title">🏪 Mi negocio</div>
+          <div class="field-group">
+            <label for="d-business-name">Nombre del negocio</label>
+            <input type="text" id="d-business-name" />
+          </div>
+          <div class="field-group">
+            <label for="d-industry">Rubro</label>
+            <input type="text" id="d-industry" />
+          </div>
+          <div class="field-group">
+            <label for="d-language">Idioma</label>
+            <select id="d-language">
+              <option value="es-AR">Español (Argentina)</option>
+              <option value="es-ES">Español (España)</option>
+              <option value="en-US">English (US)</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label for="d-accent-color">Color principal</label>
+            <input type="color" id="d-accent-color" value="#6C63FF" />
+          </div>
+          <div class="field-group">
+            <label>Logo</label>
+            <label class="photo-label" id="logo-upload-label" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;background:#f0f0ff;border-radius:8px;padding:8px 12px;font-size:13px">
+              <span id="logo-upload-text">📷 Subir logo</span>
+              <input type="file" id="logo-input" accept="image/*" class="photo-input" onchange="uploadLogo(this)" />
+            </label>
+            <img id="logo-preview" src="" alt="" style="max-height:48px;margin-top:8px;display:none;border-radius:6px" />
+          </div>
+        </div>
+
+        <!-- Sección: Links -->
+        <div class="section-block">
+          <div class="section-title">🔗 Links</div>
+          <div class="field-group">
+            <label for="d-google-url">Link de Google Reviews</label>
+            <input type="url" id="d-google-url" placeholder="https://g.page/r/..." />
+          </div>
+          <div class="field-group">
+            <label for="d-notification-email">Email de notificaciones</label>
+            <input type="email" id="d-notification-email" placeholder="Para recibir avisos de reseñas negativas" />
+          </div>
+        </div>
+
+        <!-- Sección: Texto de reseña -->
+        <div class="section-block">
+          <div class="section-title">📝 Texto de reseña</div>
+          <div class="field-group">
+            <label for="d-suggested-review">Texto sugerido <span class="optional-tag">(fallback manual)</span></label>
+            <textarea id="d-suggested-review" rows="3" placeholder="Texto de reseña de respaldo si la IA no está disponible"></textarea>
+          </div>
+        </div>
+
+        <!-- Sección: Configuración IA -->
+        <div class="section-block">
+          <div class="section-title">🤖 Configuración IA</div>
+          <div class="field-group">
+            <label for="d-ai-topics">Temas (uno por línea)</label>
+            <textarea id="d-ai-topics" rows="4"></textarea>
+          </div>
+          <div class="field-group">
+            <label for="d-ai-tones">Tonos (uno por línea)</label>
+            <textarea id="d-ai-tones" rows="3"></textarea>
+          </div>
+          <div class="field-group">
+            <label for="d-ai-styles">Estilos de apertura (uno por línea)</label>
+            <textarea id="d-ai-styles" rows="3"></textarea>
+          </div>
+          <div class="field-group">
+            <label for="d-ai-max-sentences">Máx. oraciones</label>
+            <input type="number" id="d-ai-max-sentences" min="1" max="5" value="2" style="width:80px" />
+          </div>
+          <div class="field-group">
+            <label for="d-ai-extra">Instrucciones extra <span class="optional-tag">(opcional)</span></label>
+            <input type="text" id="d-ai-extra" placeholder="Ej: Menciona siempre la ubicación del local" />
+          </div>
+        </div>
+
+        <!-- Sección: Incentivo -->
+        <div class="section-block">
+          <div class="section-title">🎁 Incentivo</div>
+          <div class="field-group" style="flex-direction:row;align-items:center;gap:10px">
+            <input type="checkbox" id="d-incentive-enabled" style="width:auto" />
+            <label for="d-incentive-enabled" style="margin:0">Activar incentivo (cupón)</label>
+          </div>
+          <div class="field-group">
+            <label for="d-incentive-text">Descripción del incentivo</label>
+            <textarea id="d-incentive-text" rows="2" placeholder="Ej: 15% de descuento en tu próxima visita"></textarea>
+          </div>
+          <div class="field-group">
+            <label for="d-incentive-button">Texto del botón <span class="optional-tag">(opcional)</span></label>
+            <input type="text" id="d-incentive-button" placeholder="Ej: Reclamar mi descuento 🎁" />
+          </div>
+        </div>
+
+        <!-- Sección: Foto -->
+        <div class="section-block">
+          <div class="section-title">📸 Foto en reseñas negativas</div>
+          <div class="field-group" style="flex-direction:row;align-items:center;gap:10px">
+            <input type="checkbox" id="d-photo-enabled" style="width:auto" />
+            <label for="d-photo-enabled" style="margin:0">Permitir subir foto</label>
+          </div>
+          <div class="field-group">
+            <label for="d-photo-prompt">Texto del prompt de foto <span class="optional-tag">(opcional)</span></label>
+            <input type="text" id="d-photo-prompt" placeholder="Ej: ¿Querés agregar una foto de tu experiencia?" />
+          </div>
+        </div>
+
+        <div id="dash-save-status" class="save-status"></div>
+        <button class="btn btn-primary" id="dash-save-btn" onclick="saveDashboard()">Guardar cambios</button>
+      </div>
+
+    </div><!-- /.card -->
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

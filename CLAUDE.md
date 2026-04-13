@@ -5,6 +5,7 @@
 |------|-----------|-----|
 | Frontend | HTML/CSS/JS vanilla | GitHub Pages → `reviews.mflowsuite.com` |
 | Admin panel | HTML/CSS/JS vanilla | `reviews.mflowsuite.com/admin/` |
+| Client portal | HTML/CSS/JS vanilla | `reviews.mflowsuite.com/client/` |
 | Base de datos | Airtable | Base `appwlnvY7rceVb06Q`, tabla `tblxTlomzuupQcgyY` |
 | Backend | n8n en EasyPanel | `fluky-n8n.lembgk.easypanel.host` |
 | IA | OpenAI GPT-4.1-mini via n8n | credencial "OpenAi Guzel" |
@@ -61,6 +62,42 @@
 - **Prompt**: mismo estilo que Workflow A pero usando `String.fromCharCode(10)` para split de líneas
   y pasando la lista completa a GPT para que elija aleatoriamente (más robusto que Math.random en n8n)
 - **Idioma**: controlado por ternario `language === 'en-US' ? 'You MUST write in English...' : 'Escribe en espanol...'`
+
+### Workflow G — Register Client (importar `n8n-workflow-G-register-client.json`)
+- **Webhook**: `POST /webhook/register-client`
+- **Input**: `{ businessName, industry, language, googleReviewUrl, email, password, aiHint }`
+- **Flujo**:
+  1. OPTIONS preflight → Respond 200
+  2. `Code - Validate & Slug` → valida campos, genera slug desde `businessName` (normaliza NFD + hifeniza)
+  3. `HTTP - Check Email` → Airtable busca `notificationEmail = email` en tabla `clients`
+  4. `Code - Check Email Result` → si existe → `IF - Email Exists` → **Respond 409** `{ error: 'email_exists' }`
+  5. `HTTP - Check Slug` → Airtable busca `clientId = slug`
+  6. `Code - Resolve Slug` → si slug tomado, append sufijo random 4 chars
+  7. `HTTP - OpenAI Generate Config` → genera JSON con `aiTopics`, `aiTones`, `aiStyles`, `suggestedReviewText`
+     - Usa `authentication: predefinedCredentialType` + `nodeCredentialType: openAiApi` → **asignar credencial "OpenAi Guzel" manualmente en n8n UI**
+     - `continueOnFail: true` — si falla la IA, el registro se crea igual con campos vacíos
+  8. `Code - Parse AI Config` → parsea JSON de OpenAI, aplica defaults si falla
+  9. `HTTP - Create Airtable Record` → POST tabla `clients` con todos los campos + `active: true`
+  10. **Respond 200**: `{ clientId, suggestedReviewText, message: 'success' }`
+- **Credencial Airtable**: "Airtable Admin PAT" (HTTP Header Auth, ID: `CDKXmqf7Ugjt0kAD`)
+- **Archivo en repo**: `n8n-workflow-G-register-client.json`
+- **⚠️ Post-import**: asignar manualmente la credencial "OpenAi Guzel" al nodo `HTTP - OpenAI Generate Config`
+
+### Workflow H — Client Dashboard (importar `n8n-workflow-H-client-dashboard.json`)
+- **Webhook**: `POST /webhook/client-dashboard`
+- **Input**: `{ email, password, action: 'get'|'save', fields? }`
+- **Flujo**:
+  1. OPTIONS preflight → Respond 200
+  2. `Code - Validate Auth` → valida email, password, action; construye searchUrl
+  3. `HTTP - Get Client by Email` → Airtable search por `notificationEmail = email`
+  4. `Code - Verify Auth` → verifica que `clientPassword` coincida; excluye `clientPassword` de la respuesta
+  5. `IF - Auth Failed` → **Respond 401** `{ error: 'invalid_credentials' }`
+  6. `IF - Action Get` → **Respond 200** `{ client: {...} }` (sin clientPassword)
+  7. `Code - Filter Fields` → elimina `clientId`, `active`, `clientPassword` del payload + convierte `''` → `null`
+  8. `HTTP - Update Airtable` → PATCH con `{ fields, typecast: true }`
+  9. **Respond 200** `{ message: 'saved' }`
+- **Credencial Airtable**: "Airtable Admin PAT"
+- **Archivo en repo**: `n8n-workflow-H-client-dashboard.json`
 
 ### Workflow F — Claim Incentive (`1u5GwJP3JKKw9HzL`)
 - **Webhook**: `POST /webhook/claim-incentive`
@@ -126,7 +163,8 @@
 | `incentiveEnabled` | boolean | `fldT7o2B42camXH7Z` | Mostrar pantalla de incentivo |
 | `incentiveText` | multilineText | `fldRD0Zw7Rui7BOD0` | Texto del incentivo (ej: "15% off en tu próxima visita") |
 | `incentiveButtonText` | text | `fldd4XZkl0K4XggyM` | Texto del botón de reclamo — si vacío usa default del T object |
-| `notificationEmail` | email | `fldC3A1LAhfHIhFMa` | Email del dueño para recibir avisos (cupones + reseñas negativas) |
+| `notificationEmail` | email | `fldC3A1LAhfHIhFMa` | Email del dueño para recibir avisos (cupones + reseñas negativas). También es el login del portal. |
+| `clientPassword` | singleLineText | `fldrmYxhYLAyk6uhe` | Contraseña del portal del cliente (plain text) — creado vía Workflow G o admin |
 | `active` | boolean | `fldJKaBd9JeAJb9um` | Cliente activo (IF lo verifica) |
 | `aiTopics` | multilineText | `fldU5aOq973RhvgG9` | Temas para prompt IA (uno por línea) — en el idioma del cliente |
 | `aiTones` | multilineText | `fldwF7YrlsCIz12xl` | Tonos para prompt IA (uno por línea) |
@@ -261,6 +299,54 @@ Se llama al inicio en `init()` una vez que se conoce el idioma del cliente.
 
 ---
 
+## Client Portal — /client/
+
+### Flujo de pantallas
+```
+screen-welcome
+  ├─ "Crear mi página" → screen-register → screen-register-loading → screen-setup-done → screen-dashboard
+  └─ "Ya tengo cuenta" → screen-login → screen-dashboard
+```
+
+### CLIENT_CONFIG
+```js
+const CLIENT_CONFIG = {
+  registerUrl:   'https://fluky-n8n.lembgk.easypanel.host/webhook/register-client',
+  dashboardUrl:  'https://fluky-n8n.lembgk.easypanel.host/webhook/client-dashboard',
+  uploadWebhook: 'https://fluky-n8n.lembgk.easypanel.host/webhook/upload-logo',
+  reviewsBase:   'https://reviews.mflowsuite.com/',
+};
+```
+
+### Auth
+- `sessionStorage.client_email` + `sessionStorage.client_pwd` (se limpia al cerrar tab)
+- Al cargar: si hay credenciales en sessionStorage → auto-login con `action: 'get'`
+- El `callDashboard()` siempre envía `{ email, password, ...payload }` al Workflow H
+
+### Funciones principales
+- `doRegister()` → POST a Workflow G; guarda credenciales; muestra `screen-setup-done` con URL + QR + preview IA
+- `doLogin()` → POST a Workflow H `action: 'get'`; guarda credenciales; llena dashboard
+- `saveDashboard()` → POST a Workflow H `action: 'save'`; campos vacíos se envían como `null`
+- `doLogout()` → limpia sessionStorage + state, vuelve a `screen-welcome`
+- `uploadLogo()` → igual que admin: resize canvas 800px + base64 → Workflow D (reutiliza la misma lógica)
+- `populateDashboard(client)` → llena todos los campos del formulario; aplica accentColor como `--accent`
+
+### Campos editables en dashboard
+- 🏪 Mi negocio: `businessName`, `industry`, `language`, `accentColor`, `logoUrl`
+- 🔗 Links: `googleReviewUrl`, `notificationEmail`
+- 📝 Texto: `suggestedReviewText`
+- 🤖 IA: `aiTopics`, `aiTones`, `aiStyles`, `aiMaxSentences`, `aiExtraInstructions`
+- 🎁 Incentivo: `incentiveEnabled`, `incentiveText`, `incentiveButtonText`
+- 📸 Foto: `photoUploadEnabled`, `photoPromptText`
+- **NO editables**: `clientId`, `active`, `clientPassword`
+
+### QR en dashboard
+- `#dash-url` → URL de la página (`reviews.mflowsuite.com/?clientId=...`)
+- `#dash-qr` → imagen QR generada con `api.qrserver.com` (120x120)
+- Botón "Descargar QR" → abre URL del QR en nueva tab (browser la descarga)
+
+---
+
 ## Admin Panel — admin/app.js
 
 ### ADMIN_CONFIG
@@ -384,6 +470,8 @@ const ADMIN_CONFIG = {
 - [ ] QR por cliente: ya funciona en el modal del admin, falta imprimir físico para Tino's
 - [ ] Resend: si el volumen crece, evaluar upgrade (plan Starter: 50.000/mes por USD 20)
 - [ ] Workflow A: si la respuesta se vuelve lenta, desconectar nodo OpenAI y dejarlo huérfano
+- [ ] Portal cliente: importar Workflow G y H en n8n UI + asignar credencial "OpenAi Guzel" al nodo OpenAI de Workflow G
+- [ ] Portal cliente: probar registro completo end-to-end
 
 ## Completado ✅
 - [x] Prompt IA dinámico: campos `aiTopics`, `aiTones`, `aiStyles`, `aiMaxSentences`, `aiExtraInstructions` en Airtable. Workflows A y E los usan para generar texto variado.
@@ -400,3 +488,4 @@ const ADMIN_CONFIG = {
 - [x] IA en inglés para clientes en-US: prompt con ternario de idioma, `industry` en inglés en Airtable, `aiTopics`/`aiTones`/`aiStyles` en inglés para `distribuidora-cuarso`.
 - [x] Botón "Listo ya lo dejé" oculto hasta que el usuario abra Google Reviews — impide reclamar incentivo sin visitar Google.
 - [x] Seguridad: clave Resend expuesta en CLAUDE.md detectada por GitGuardian, revocada y reemplazada. Workflow F usa clave separada no afectada.
+- [x] Portal autoservicio para clientes: `/client/` con registro, login, dashboard. Workflows G (register) y H (client-dashboard) creados como JSON para importar en n8n. Campo `clientPassword` agregado a Airtable (`fldrmYxhYLAyk6uhe`).

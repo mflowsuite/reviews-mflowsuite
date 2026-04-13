@@ -1,0 +1,243 @@
+{
+  "name": "Reseñas - G: Register Client",
+  "nodes": [
+    {
+      "parameters": {"httpMethod":"POST","path":"register-client","responseMode":"responseNode","options":{}},
+      "id": "webhook-register",
+      "name": "Webhook POST",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 304],
+      "webhookId": "a1b2c3d4-e5f6-7890-abcd-register01234"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": false, "leftValue": "", "typeValidation": "loose"},
+          "conditions": [{"id":"c-options","leftValue":"={{ $json.headers['request-method'] ?? $json.method ?? '' }}","rightValue":"OPTIONS","operator":{"type":"string","operation":"equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-options",
+      "name": "IF - OPTIONS preflight",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [240, 304]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {
+            "entries": [
+              {"name": "Access-Control-Allow-Origin", "value": "*"},
+              {"name": "Access-Control-Allow-Methods", "value": "POST, OPTIONS"},
+              {"name": "Access-Control-Allow-Headers", "value": "Content-Type"}
+            ]
+          }
+        }
+      },
+      "id": "respond-preflight",
+      "name": "Respond - Preflight OK",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [480, 160]
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst businessName = String(body.businessName || '').trim();\nconst industry = String(body.industry || '').trim();\nconst language = String(body.language || 'es-AR').trim();\nconst googleReviewUrl = String(body.googleReviewUrl || '').trim();\nconst email = String(body.email || '').toLowerCase().trim();\nconst password = String(body.password || '').trim();\nconst aiHint = String(body.aiHint || '').trim();\n\nif (!businessName || !industry || !email || !email.includes('@') || password.length < 6) {\n  throw new Error('Invalid input: businessName, industry, email and password (min 6) are required');\n}\n\n// Generate slug from businessName\nlet slug = businessName.toLowerCase()\n  .normalize('NFD').replace(/[\\u0300-\\u036f]/g, '')\n  .replace(/[^a-z0-9\\s]/g, '')\n  .replace(/\\s+/g, '-')\n  .replace(/-+/g, '-')\n  .replace(/^-|-$/g, '');\nif (!slug) slug = 'negocio';\n\nconst emailSearchUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY?filterByFormula=' + encodeURIComponent(\"{notificationEmail}='\" + email + \"'\") + '&maxRecords=1';\nconst slugSearchUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY?filterByFormula=' + encodeURIComponent(\"{clientId}='\" + slug + \"'\") + '&maxRecords=1';\n\nreturn [{ json: { businessName, industry, language, googleReviewUrl, email, password, aiHint, baseSlug: slug, emailSearchUrl, slugSearchUrl } }];"
+      },
+      "id": "code-validate-slug",
+      "name": "Code - Validate & Slug",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 400]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.emailSearchUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-check-email",
+      "name": "HTTP - Check Email",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [720, 400],
+      "credentials": {"httpHeaderAuth": {"id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT"}}
+    },
+    {
+      "parameters": {
+        "jsCode": "const records = $input.first().json.records || [];\nconst prev = $('Code - Validate & Slug').item.json;\nreturn [{ json: { ...prev, emailExists: records.length > 0 } }];"
+      },
+      "id": "code-check-email-result",
+      "name": "Code - Check Email Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [960, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"id":"c-email-exists","leftValue":"={{ $json.emailExists }}","rightValue":true,"operator":{"type":"boolean","operation":"equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-email-exists",
+      "name": "IF - Email Exists",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1200, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"error\": \"email_exists\"}",
+        "options": {
+          "responseCode": 409,
+          "responseHeaders": {"entries": [{"name": "Access-Control-Allow-Origin", "value": "*"}, {"name": "Content-Type", "value": "application/json"}]}
+        }
+      },
+      "id": "respond-email-exists",
+      "name": "Respond - Email Exists",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [1440, 272]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.slugSearchUrl }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "options": {}
+      },
+      "id": "http-check-slug",
+      "name": "HTTP - Check Slug",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1440, 544],
+      "credentials": {"httpHeaderAuth": {"id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT"}}
+    },
+    {
+      "parameters": {
+        "jsCode": "const records = $input.first().json.records || [];\nconst prev = $('Code - Check Email Result').item.json;\nlet slug = prev.baseSlug;\nif (records.length > 0) {\n  // slug taken — append random 4-char suffix\n  const suffix = Math.random().toString(36).slice(2, 6);\n  slug = prev.baseSlug + '-' + suffix;\n}\nreturn [{ json: { ...prev, clientId: slug } }];"
+      },
+      "id": "code-resolve-slug",
+      "name": "Code - Resolve Slug",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1680, 544]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.openai.com/v1/chat/completions",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "openAiApi",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"gpt-4.1-mini\",\n  \"max_tokens\": 400,\n  \"temperature\": 0.7,\n  \"messages\": [\n    {\"role\":\"system\",\"content\":\"You are a helper that generates review assistant configuration for local businesses. Return ONLY a valid JSON object with these exact keys. No markdown, no explanation, no code blocks.\"},\n    {\"role\":\"user\",\"content\":\"Business: {{ $json.businessName }}\\nIndustry: {{ $json.industry }}\\nLanguage: {{ $json.language }}\\nHint: {{ $json.aiHint || 'ninguno' }}\\n\\nGenerate JSON:\\n{\\n  \\\"aiTopics\\\": \\\"topic1\\\\ntopic2\\\\ntopic3\\\\ntopic4\\\",\\n  \\\"aiTones\\\": \\\"tone1\\\\ntone2\\\\ntone3\\\",\\n  \\\"aiStyles\\\": \\\"style1\\\\nstyle2\\\\nstyle3\\\",\\n  \\\"suggestedReviewText\\\": \\\"short sample review\\\"\\n}\\nTopics: 4 specific topics for this business type, in the client language.\\nTones: enthusiastic / casual and friendly / brief and direct — in the client language.\\nStyles: 3 different ways to start a review — in the client language.\\nsuggestedReviewText: one short example review, max 2 sentences, first person, informal, in the client language.\"}\n  ]\n}",
+        "options": {"timeout": 15000}
+      },
+      "id": "http-openai-config",
+      "name": "HTTP - OpenAI Generate Config",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 544],
+      "continueOnFail": true
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $('Code - Resolve Slug').item.json;\nconst content = $input.first().json.choices?.[0]?.message?.content || '{}';\n\nlet aiConfig = {};\ntry {\n  const cleaned = content.replace(/```json?\\n?/g, '').replace(/```/g, '').trim();\n  aiConfig = JSON.parse(cleaned);\n} catch(e) {\n  // fallback defaults based on language\n  const isEn = prev.language === 'en-US';\n  aiConfig = {\n    aiTopics: isEn ? 'customer service\\nproduct quality\\ncleanliness\\nvalue for money' : 'buena atencion\\ncalidad del producto\\nlimpieza\\nrelacion precio-calidad',\n    aiTones: isEn ? 'enthusiastic\\ncasual and friendly\\nbrief and direct' : 'entusiasta\\ncasual y amigable\\nbreve y directo',\n    aiStyles: isEn ? 'Start with what stood out most\\nStart with a recommendation\\nStart with how you felt' : 'Empieza por lo que mas te llamo la atencion\\nEmpieza con una recomendacion\\nEmpieza por como te sentiste',\n    suggestedReviewText: isEn ? 'Great experience, I totally recommend it!' : 'Muy buena experiencia, lo recomiendo!'\n  };\n}\n\nreturn [{ json: {\n  ...prev,\n  aiTopics: String(aiConfig.aiTopics || ''),\n  aiTones: String(aiConfig.aiTones || ''),\n  aiStyles: String(aiConfig.aiStyles || ''),\n  suggestedReviewText: String(aiConfig.suggestedReviewText || '')\n} }];"
+      },
+      "id": "code-parse-ai-config",
+      "name": "Code - Parse AI Config",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2160, 544]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ fields: { clientId: $json.clientId, businessName: $json.businessName, industry: $json.industry, language: $json.language, googleReviewUrl: $json.googleReviewUrl || null, notificationEmail: $json.email, clientPassword: $json.password, aiTopics: $json.aiTopics || null, aiTones: $json.aiTones || null, aiStyles: $json.aiStyles || null, suggestedReviewText: $json.suggestedReviewText || null, active: true, aiMaxSentences: 2 } }) }}",
+        "options": {}
+      },
+      "id": "http-create-record",
+      "name": "HTTP - Create Airtable Record",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2400, 544],
+      "credentials": {"httpHeaderAuth": {"id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT"}}
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ clientId: $('Code - Parse AI Config').item.json.clientId, suggestedReviewText: $('Code - Parse AI Config').item.json.suggestedReviewText, message: 'success' }) }}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {"entries": [{"name": "Access-Control-Allow-Origin", "value": "*"}, {"name": "Content-Type", "value": "application/json"}]}
+        }
+      },
+      "id": "respond-success",
+      "name": "Respond - Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2640, 544]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\"error\": \"Invalid request\"}",
+        "options": {
+          "responseCode": 400,
+          "responseHeaders": {"entries": [{"name": "Access-Control-Allow-Origin", "value": "*"}]}
+        }
+      },
+      "id": "respond-error",
+      "name": "Respond - Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [720, 672]
+    }
+  ],
+  "connections": {
+    "Webhook POST": {"main": [[{"node": "IF - OPTIONS preflight", "type": "main", "index": 0}]]},
+    "IF - OPTIONS preflight": {
+      "main": [
+        [{"node": "Respond - Preflight OK", "type": "main", "index": 0}],
+        [{"node": "Code - Validate & Slug", "type": "main", "index": 0}]
+      ]
+    },
+    "Code - Validate & Slug": {
+      "main": [[{"node": "HTTP - Check Email", "type": "main", "index": 0}]],
+      "error": [[{"node": "Respond - Error", "type": "main", "index": 0}]]
+    },
+    "HTTP - Check Email": {"main": [[{"node": "Code - Check Email Result", "type": "main", "index": 0}]]},
+    "Code - Check Email Result": {"main": [[{"node": "IF - Email Exists", "type": "main", "index": 0}]]},
+    "IF - Email Exists": {
+      "main": [
+        [{"node": "Respond - Email Exists", "type": "main", "index": 0}],
+        [{"node": "HTTP - Check Slug", "type": "main", "index": 0}]
+      ]
+    },
+    "HTTP - Check Slug": {"main": [[{"node": "Code - Resolve Slug", "type": "main", "index": 0}]]},
+    "Code - Resolve Slug": {"main": [[{"node": "HTTP - OpenAI Generate Config", "type": "main", "index": 0}]]},
+    "HTTP - OpenAI Generate Config": {"main": [[{"node": "Code - Parse AI Config", "type": "main", "index": 0}]]},
+    "Code - Parse AI Config": {"main": [[{"node": "HTTP - Create Airtable Record", "type": "main", "index": 0}]]},
+    "HTTP - Create Airtable Record": {"main": [[{"node": "Respond - Success", "type": "main", "index": 0}]]}
+  },
+  "settings": {"executionOrder": "v1"},
+  "staticData": null
+}
