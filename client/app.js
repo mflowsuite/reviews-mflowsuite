@@ -109,47 +109,28 @@ function toggleQRMode() {
   document.getElementById('cqr-mode-btn').textContent = cqr.dark ? '☀️ Modo día' : '🌙 Modo noche';
 }
 
-function downloadQR() {
-  const btn   = document.getElementById('cqr-download-btn');
-  const imgEl = document.getElementById('cqr-img');
-  const isDark = (imgEl.src || '').includes('bgcolor=');
-  const fname  = `qr-mipagina${isDark ? '-dark' : ''}.png`;
-
-  if (btn) { btn.textContent = 'Descargando…'; btn.disabled = true; }
-
-  function done() { if (btn) { btn.textContent = '⬇️ Descargar'; btn.disabled = false; } }
-  function triggerSave(blobUrl) {
-    const a = document.createElement('a');
-    a.href = blobUrl; a.download = fname;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
-  }
-
-  // Método 1: canvas (no necesita fetch, usa imagen ya cargada con crossorigin=anonymous)
+async function downloadQR() {
+  const btn = document.getElementById('cqr-download-btn');
+  btn.textContent = 'Descargando…';
+  btn.disabled    = true;
   try {
-    const canvas = document.createElement('canvas');
-    canvas.width  = imgEl.naturalWidth  || 600;
-    canvas.height = imgEl.naturalHeight || 600;
-    canvas.getContext('2d').drawImage(imgEl, 0, 0);
-    canvas.toBlob(blob => {
-      if (blob) { triggerSave(URL.createObjectURL(blob)); done(); }
-      else      { fetchFallback(); }
-    }, 'image/png');
+    const imgSrc  = document.getElementById('cqr-img').src;
+    const isDark  = imgSrc.includes('bgcolor=');
+    const res     = await fetch(imgSrc);
+    const blob    = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a       = document.createElement('a');
+    a.href        = blobUrl;
+    a.download    = `qr-mipagina${isDark ? '-dark' : ''}.png`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
   } catch {
-    fetchFallback();
-  }
-
-  // Método 2: fetch si el canvas falla (imagen en caché sin CORS)
-  async function fetchFallback() {
-    try {
-      // Recargar imagen con cache-bust para obtener headers CORS correctos
-      const url = imgEl.src.split('&_=')[0] + '&_=' + Date.now();
-      const res  = await fetch(url, { cache: 'no-store' });
-      const blob = await res.blob();
-      triggerSave(URL.createObjectURL(blob));
-    } catch {
-      window.open(imgEl.src, '_blank'); // último recurso
-    } finally { done(); }
+    window.open(document.getElementById('cqr-img').src, '_blank');
+  } finally {
+    btn.textContent = '⬇️ Descargar';
+    btn.disabled    = false;
   }
 }
 
