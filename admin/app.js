@@ -614,4 +614,53 @@ function showFormAlert(msg) {
   updateAIPlaceholders('Español España');
 
   showScreen('login');
+
+  // Mostrar pb-bar y arrancar animación
+  const pbBar = document.getElementById('pb-bar');
+  if (pbBar) { pbBar.classList.add('pb-visible'); startPbAnimation(); }
 })();
+
+/* ── Powered-by animation (login screen) ─────────────── */
+let pbAnimStarted = false;
+function startPbAnimation() {
+  if (pbAnimStarted) return;
+  const logoEl = document.getElementById('pb-logo');
+  if (!logoEl) return;
+  if (!logoEl.complete || logoEl.naturalWidth === 0) {
+    logoEl.onload = () => { pbAnimStarted = false; startPbAnimation(); };
+    return;
+  }
+  pbAnimStarted = true;
+  _runPbAnim();
+}
+function _runPbAnim() {
+  const BRAND='MFlowSuite', SZ=20, HOP=200, FINAL=520, SQ=380, LOSQ=400, INTRO=500;
+  const sceneEl=document.getElementById('pb-scene'), rowEl=document.getElementById('pb-row');
+  const charsEl=document.getElementById('pb-chars'), slotEl=document.getElementById('pb-slot');
+  const logoEl=document.getElementById('pb-logo');
+  if (!sceneEl||!logoEl) return;
+  charsEl.innerHTML='';
+  const spans=[];
+  for (const ch of BRAND){const s=document.createElement('span');s.className='pb-ch';s.textContent=ch;charsEl.appendChild(s);spans.push(s);}
+  const lerp=(a,b,t)=>a+(b-a)*t, clamp=(v,a,b)=>Math.max(a,Math.min(b,v)), arc=(t,h)=>4*h*t*(1-t);
+  function spring(t){if(t<.15){const r=t/.15;return[lerp(1,1.35,r),lerp(1,.55,r)];}if(t<.40){const r=(t-.15)/.25;return[lerp(1.35,.88,r),lerp(.55,1.22,r)];}if(t<.70){const r=(t-.40)/.30;return[lerp(.88,1.04,r),lerp(1.22,.96,r)];}const r=(t-.70)/.30;return[lerp(1.04,1,r),lerp(.96,1,r)];}
+  function airShape(t){if(t<.45)return[lerp(1,.84,t/.45),lerp(1,1.2,t/.45)];if(t<.82)return[.84,1.2];const r=(t-.82)/.18;return[lerp(.84,1.28,r),lerp(1.2,.68,r)];}
+  function center(el){const er=el.getBoundingClientRect(),sr=sceneEl.getBoundingClientRect();return{x:er.left-sr.left+er.width/2,y:er.top-sr.top+er.height/2};}
+  function moveLogo(cx,cy,sx,sy,rot,alpha){logoEl.style.transform=`translate(${cx-SZ/2}px,${cy-SZ/2}px) rotate(${rot}rad) scale(${sx},${sy})`;logoEl.style.opacity=alpha;}
+  let phase='intro',t0=null,hopIdx=0,hop=null;
+  const lsq=spans.map(()=>({at:-1}));let lsqAt=-1,lsX=1,lsY=1;
+  function triggerLogoSq(now){lsqAt=now;lsX=1.3;lsY=0.62;}
+  function startHop(from,to,h,dur,now){hop={from:{...from},to:{...to},h,dur,t0:now};}
+  rowEl.style.opacity='0'; moveLogo(-300,0,1,1,0,0);
+  function frame(now){
+    if(!t0)t0=now; const el=now-t0;
+    for(let i=0;i<spans.length;i++){if(lsq[i].at<0)continue;const t=clamp((now-lsq[i].at)/SQ,0,1);const[sx,sy]=spring(t);spans[i].style.transform=`scaleX(${sx}) scaleY(${sy})`;spans[i].style.color=t<.28?'rgba(110,168,255,.9)':'rgba(255,255,255,.38)';if(t>=1){lsq[i].at=-1;spans[i].style.transform='';spans[i].style.color='';}}
+    if(lsqAt>=0){const t=clamp((now-lsqAt)/LOSQ,0,1);const[sx,sy]=spring(t);lsX=sx;lsY=sy;if(t>=1){lsqAt=-1;lsX=lsY=1;}}
+    if(phase==='intro'){const t=clamp(el/INTRO,0,1);rowEl.style.opacity=t;moveLogo(-300,0,1,1,0,0);if(t>=1){const lpos=spans.map(center),spos=center(slotEl);const last=spans.length-1;phase='hopping';hopIdx=last;t0=now;startHop({x:lpos[last].x+60,y:spos.y},{x:lpos[last].x,y:spos.y},38,HOP,now);frame._lpos=lpos;frame._spos=spos;}}
+    else if(phase==='hopping'){const lpos=frame._lpos,spos=frame._spos;if(hop){const ht=clamp((now-hop.t0)/hop.dur,0,1);const lx=lerp(hop.from.x,hop.to.x,ht),ly=lerp(hop.from.y,hop.to.y,ht)-arc(ht,hop.h);const rot=(ht<.5?1:-1)*Math.sin(Math.PI*ht)*.22;const[sx,sy]=lsqAt>=0?[lsX,lsY]:airShape(ht);moveLogo(lx,ly,sx,sy,rot,1);if(ht>=1){lsq[hopIdx].at=now;triggerLogoSq(now);const fx=hop.to.x,fy=hop.to.y;hopIdx--;if(hopIdx>=0){startHop({x:fx,y:fy},{x:lpos[hopIdx].x,y:spos.y},38,HOP,now);}else{phase='final';t0=now;startHop({x:fx,y:fy},{x:spos.x,y:spos.y},70,FINAL,now);}}}}
+    else if(phase==='final'){const spos=frame._spos;if(hop){const ht=clamp((now-hop.t0)/hop.dur,0,1);const lx=lerp(hop.from.x,hop.to.x,ht),ly=lerp(hop.from.y,hop.to.y,ht)-arc(ht,hop.h);const rot=(ht<.5?1:-1)*Math.sin(Math.PI*ht)*.18;const[sx,sy]=lsqAt>=0?[lsX,lsY]:airShape(ht);moveLogo(lx,ly,sx,sy,rot,1);if(ht>=1){phase='settled';t0=now;triggerLogoSq(now);moveLogo(spos.x,spos.y,lsX,lsY,0,1);logoEl.classList.add('pb-glowing');}}}
+    else if(phase==='settled'){const spos=frame._spos;moveLogo(spos.x,spos.y,lsX,lsY,0,1);return;}
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}

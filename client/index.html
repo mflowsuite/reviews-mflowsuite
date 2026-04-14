@@ -212,6 +212,7 @@
     .skip-link:hover { color: var(--primary); }
     /* ── Powered-by bar ── */
     #pb-bar { position:fixed; bottom:1.2rem; left:0; right:0; display:flex; justify-content:center; pointer-events:none; z-index:5; opacity:0; transition:opacity 0.5s; }
+    #pb-link { pointer-events:auto; text-decoration:none; display:inline-block; cursor:pointer; }
     #pb-bar.pb-visible { opacity:1; }
     #pb-scene { position:relative; display:inline-block; }
     #pb-row { display:inline-flex; align-items:center; font:600 12px/1 'Segoe UI',system-ui,sans-serif; white-space:nowrap; user-select:none; gap:0; }
@@ -593,14 +594,16 @@
      Powered-by animation bar
 ════════════════════════════════ -->
 <div id="pb-bar">
-  <div id="pb-scene">
-    <div id="pb-row">
-      <span id="pb-powered">Powered by</span>
-      <span id="pb-slot"></span>
-      <span id="pb-chars"></span>
+  <a id="pb-link" href="https://mflowsuite.com" target="_blank" rel="noopener" title="Powered by mflowsuite">
+    <div id="pb-scene">
+      <div id="pb-row">
+        <span id="pb-powered">Powered by</span>
+        <span id="pb-slot"></span>
+        <span id="pb-chars"></span>
+      </div>
+      <img id="pb-logo" src="../assets/mflowsuite-logo.png" alt="">
     </div>
-    <img id="pb-logo" src="../assets/mflowsuite-logo.png" alt="">
-  </div>
+  </a>
 </div>
 
 <script src="app.js"></script>

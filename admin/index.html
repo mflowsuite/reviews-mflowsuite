@@ -29,20 +29,34 @@
     #screen-login.active { display: flex; }
 
     /* ── Login ── */
-    #screen-login { min-height: 100vh; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); }
-    .login-card { background: var(--card); border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 420px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
-    .login-logo { font-size: 2rem; margin-bottom: 0.5rem; }
+    #screen-login { min-height: 100vh; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 2rem 1rem; }
+    .login-outer { display:flex; flex-direction:column; align-items:center; gap:1.2rem; width:100%; max-width:420px; }
+    .login-logo-img { height:80px; width:80px; border-radius:14px; display:block; }
+    .login-card { background: var(--card); border-radius: 20px; padding: 2.5rem; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
     .login-card h1 { font-size: 1.5rem; margin-bottom: 0.3rem; }
     .login-card p  { color: var(--muted); font-size: 0.88rem; margin-bottom: 2rem; }
+    /* ── pb-bar (admin) ── */
+    #pb-bar { position:fixed; bottom:1.2rem; left:0; right:0; display:flex; justify-content:center; pointer-events:none; z-index:5; opacity:0; transition:opacity 0.5s; }
+    #pb-bar.pb-visible { opacity:1; }
+    #pb-link { pointer-events:auto; text-decoration:none; display:inline-block; cursor:pointer; }
+    #pb-scene { position:relative; display:inline-block; }
+    #pb-row { display:inline-flex; align-items:center; font:600 12px/1 'Segoe UI',system-ui,sans-serif; white-space:nowrap; user-select:none; gap:0; }
+    #pb-powered { color:rgba(255,255,255,.38); margin-right:2px; }
+    #pb-slot { display:inline-block; width:20px; height:20px; margin:0 4px; flex-shrink:0; vertical-align:middle; }
+    .pb-ch { display:inline-block; color:rgba(255,255,255,.38); transform-origin:center bottom; will-change:transform,color; }
+    #pb-logo { position:absolute; width:20px; height:20px; left:0; top:0; border-radius:4px; object-fit:cover; transform-origin:center center; pointer-events:none; will-change:transform,opacity; opacity:0; filter:drop-shadow(0 0 0px rgba(60,130,255,0)); transition:filter .4s ease; }
+    #pb-logo.pb-glowing { filter:drop-shadow(0 0 6px rgba(60,130,255,.8)); }
 
     /* ── Layout ── */
     .admin-wrap { display: flex; flex-direction: column; min-height: 100vh; }
     .topbar { background: var(--card); border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
     .topbar-title { font-size: 1rem; font-weight: 700; color: var(--primary); }
-    .topbar-logo-wrap { display:flex; align-items:center; gap:0.45rem; text-decoration:none; white-space:nowrap; flex-shrink:0; }
-    .topbar-logo-wrap img { height:28px; width:28px; border-radius:6px; object-fit:cover; }
-    .topbar-logo-text { font-size:0.88rem; font-weight:800; color:var(--primary); }
-    .topbar-sep  { width:1px; height:18px; background:var(--border); flex-shrink:0; }
+    .topbar-logo-wrap { display:flex; align-items:center; gap:0.4rem; text-decoration:none; white-space:nowrap; flex-shrink:0; }
+    .topbar-logo-wrap img { height:36px; width:36px; border-radius:8px; object-fit:cover; }
+    .topbar-logo-stack { display:flex; flex-direction:column; line-height:1.1; }
+    .topbar-logo-text { font-size:0.82rem; font-weight:800; color:var(--primary); }
+    .topbar-logo-sub  { font-size:0.62rem; color:var(--muted); }
+    .topbar-sep  { width:1px; height:22px; background:var(--border); flex-shrink:0; margin:0 0.25rem; }
     .topbar-powered { font-size:0.72rem; color:var(--muted); white-space:nowrap; flex-shrink:0; }
     .topbar-powered a { color:var(--primary); text-decoration:none; font-weight:600; }
     .topbar-powered a:hover { text-decoration:underline; }
@@ -137,8 +151,10 @@
      PANTALLA: Login
 ════════════════════════════════════════ -->
 <div id="screen-login" class="screen">
+  <div class="login-outer">
+  <img class="login-logo-img" src="../assets/mflowsuite-logo.png" alt="MFlowSuite">
   <div class="login-card">
-    <div class="login-logo">⭐</div>
+    <span style="font-size:1.5rem;letter-spacing:3px;display:block;margin-bottom:0.5rem">⭐⭐⭐⭐⭐</span>
     <h1>Reviews Admin</h1>
     <p>Acceso restringido — solo administradores</p>
 
@@ -151,6 +167,21 @@
 
     <button class="btn btn-primary btn-full" id="login-btn" onclick="doLogin()">Entrar →</button>
   </div>
+  </div>
+</div>
+
+<!-- Powered-by animation bar (admin login) -->
+<div id="pb-bar">
+  <a id="pb-link" href="https://mflowsuite.com" target="_blank" rel="noopener" title="Powered by mflowsuite">
+    <div id="pb-scene">
+      <div id="pb-row">
+        <span id="pb-powered">Powered by</span>
+        <span id="pb-slot"></span>
+        <span id="pb-chars"></span>
+      </div>
+      <img id="pb-logo" src="../assets/mflowsuite-logo.png" alt="">
+    </div>
+  </a>
 </div>
 
 
@@ -162,7 +193,10 @@
     <div class="topbar">
       <a class="topbar-logo-wrap" href="https://mflowsuite.com" target="_blank" rel="noopener">
         <img src="../assets/mflowsuite-logo.png" alt="MFlowSuite" />
-        <span class="topbar-logo-text">mflowsuite</span>
+        <div class="topbar-logo-stack">
+          <span class="topbar-logo-text">mflowsuite</span>
+          <span class="topbar-logo-sub">Powered by mflowsuite</span>
+        </div>
       </a>
       <div class="topbar-sep"></div>
       <span class="topbar-title">Reviews Admin</span>
@@ -192,7 +226,10 @@
       <button class="btn btn-outline btn-sm" onclick="goBackToList()">← Volver</button>
       <a class="topbar-logo-wrap" href="https://mflowsuite.com" target="_blank" rel="noopener" style="margin-left:0.5rem">
         <img src="../assets/mflowsuite-logo.png" alt="MFlowSuite" />
-        <span class="topbar-logo-text">mflowsuite</span>
+        <div class="topbar-logo-stack">
+          <span class="topbar-logo-text">mflowsuite</span>
+          <span class="topbar-logo-sub">Powered by mflowsuite</span>
+        </div>
       </a>
       <div class="topbar-sep"></div>
       <span class="topbar-title" id="form-title">Nuevo cliente</span>
