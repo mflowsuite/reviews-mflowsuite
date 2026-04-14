@@ -30,13 +30,13 @@
 
     /* ── Login ── */
     #screen-login { min-height: 100vh; align-items: center; justify-content: center; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); padding: 2rem 1rem; }
-    .login-outer { display:flex; flex-direction:column; align-items:center; gap:1.2rem; width:100%; max-width:420px; }
+    .login-outer { position:relative; z-index:2; display:flex; flex-direction:column; align-items:center; gap:1.2rem; width:100%; max-width:420px; }
     .login-logo-img { height:80px; width:80px; border-radius:14px; display:block; }
     .login-card { background: var(--card); border-radius: 20px; padding: 2.5rem; width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
     .login-card h1 { font-size: 1.5rem; margin-bottom: 0.3rem; }
     .login-card p  { color: var(--muted); font-size: 0.88rem; margin-bottom: 2rem; }
     /* ── pb-bar (admin) ── */
-    #pb-bar { position:fixed; bottom:1.2rem; left:0; right:0; display:flex; justify-content:center; pointer-events:none; z-index:5; opacity:0; transition:opacity 0.5s; }
+    #pb-bar { position:fixed; bottom:1.2rem; left:0; right:0; display:flex; justify-content:center; pointer-events:none; z-index:1; opacity:0; transition:opacity 0.5s; }
     #pb-bar.pb-visible { opacity:1; }
     #pb-link { pointer-events:auto; text-decoration:none; display:inline-block; cursor:pointer; }
     #pb-scene { position:relative; display:inline-block; }
