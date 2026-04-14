@@ -595,6 +595,9 @@ function showFormAlert(msg) {
   window.scrollTo(0, 0);
 }
 
+/* ── Powered-by animation (login screen) ─────────────── */
+let pbAnimStarted = false;
+
 // ══════════════════════════════════════════════════════════
 //  INICIALIZACIÓN
 // ══════════════════════════════════════════════════════════
@@ -620,8 +623,6 @@ function showFormAlert(msg) {
   if (pbBar) { pbBar.classList.add('pb-visible'); startPbAnimation(); }
 })();
 
-/* ── Powered-by animation (login screen) ─────────────── */
-let pbAnimStarted = false;
 function startPbAnimation() {
   if (pbAnimStarted) return;
   const logoEl = document.getElementById('pb-logo');
