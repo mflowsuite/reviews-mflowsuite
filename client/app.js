@@ -109,29 +109,42 @@ function toggleQRMode() {
   document.getElementById('cqr-mode-btn').textContent = cqr.dark ? '☀️ Modo día' : '🌙 Modo noche';
 }
 
-async function downloadQR() {
-  const btn = document.getElementById('cqr-download-btn');
+function downloadQR() {
+  const btn    = document.getElementById('cqr-download-btn');
+  const imgSrc = document.getElementById('cqr-img').src;
+  const isDark = imgSrc.includes('bgcolor=');
+  const fname  = `qr-mipagina${isDark ? '-dark' : ''}.png`;
+
   btn.textContent = 'Descargando…';
   btn.disabled    = true;
-  try {
-    const imgSrc  = document.getElementById('cqr-img').src;
-    const isDark  = imgSrc.includes('bgcolor=');
-    const res     = await fetch(imgSrc);
-    const blob    = await res.blob();
-    const blobUrl = URL.createObjectURL(blob);
-    const a       = document.createElement('a');
-    a.href        = blobUrl;
-    a.download    = `qr-mipagina${isDark ? '-dark' : ''}.png`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
+
+  function done() { btn.textContent = '⬇️ Descargar'; btn.disabled = false; }
+  function save(blobUrl) {
+    const a = document.createElement('a');
+    a.href = blobUrl; a.download = fname;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
-  } catch {
-    window.open(document.getElementById('cqr-img').src, '_blank');
-  } finally {
-    btn.textContent = '⬇️ Descargar';
-    btn.disabled    = false;
   }
+
+  // Crear nueva Image con crossOrigin ANTES de asignar src (orden crítico para CORS)
+  // Cache-bust con timestamp para forzar respuesta fresca con headers CORS correctos
+  const img = new Image();
+  img.crossOrigin = 'anonymous';
+  img.onload = function() {
+    try {
+      const canvas = document.createElement('canvas');
+      canvas.width  = img.naturalWidth  || 600;
+      canvas.height = img.naturalHeight || 600;
+      canvas.getContext('2d').drawImage(img, 0, 0);
+      canvas.toBlob(blob => {
+        if (blob) { save(URL.createObjectURL(blob)); done(); }
+        else      { window.open(imgSrc, '_blank'); done(); }
+      }, 'image/png');
+    } catch { window.open(imgSrc, '_blank'); done(); }
+  };
+  img.onerror = function() { window.open(imgSrc, '_blank'); done(); };
+  // El &_= fuerza que el browser haga una petición nueva (no usa caché sin headers CORS)
+  img.src = imgSrc.split('&_=')[0] + '&_=' + Date.now();
 }
 
 function printQR() {
