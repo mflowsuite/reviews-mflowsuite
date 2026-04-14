@@ -638,15 +638,6 @@ function copyDashUrl() {
   setTimeout(() => { el.textContent = orig; }, 1500);
 }
 
-function downloadQR() {
-  const clientId = state.client?.clientId || '';
-  const url = qrUrl(reviewUrl(clientId), '600x600');
-  const a   = document.createElement('a');
-  a.href     = url;
-  a.download = 'qr-reviews.png';
-  a.target   = '_blank';
-  a.click();
-}
 
 /* ── Powered-by animation ───────────────────── */
 let pbAnimStarted = false;
