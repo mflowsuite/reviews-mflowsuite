@@ -113,7 +113,8 @@ function downloadQR() {
   const btn    = document.getElementById('cqr-download-btn');
   const imgSrc = document.getElementById('cqr-img').src;
   const isDark = imgSrc.includes('bgcolor=');
-  const fname  = `qr-mipagina${isDark ? '-dark' : ''}.png`;
+  const clientId = state.client?.clientId || 'mipagina';
+  const fname  = `qr-${clientId}${isDark ? '-dark' : ''}.png`;
 
   btn.textContent = 'Descargando…';
   btn.disabled    = true;

@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Admin · Reviews</title>
+  <title>Admin · mflowsuite</title>
+  <link rel="icon" type="image/x-icon" href="../favicon.ico" />
+  <link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png" />
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
@@ -36,6 +39,13 @@
     .admin-wrap { display: flex; flex-direction: column; min-height: 100vh; }
     .topbar { background: var(--card); border-bottom: 1px solid var(--border); height: 56px; display: flex; align-items: center; padding: 0 1.5rem; gap: 1rem; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 4px rgba(0,0,0,0.06); }
     .topbar-title { font-size: 1rem; font-weight: 700; color: var(--primary); }
+    .topbar-logo-wrap { display:flex; align-items:center; gap:0.45rem; text-decoration:none; white-space:nowrap; flex-shrink:0; }
+    .topbar-logo-wrap img { height:28px; width:28px; border-radius:6px; object-fit:cover; }
+    .topbar-logo-text { font-size:0.88rem; font-weight:800; color:var(--primary); }
+    .topbar-sep  { width:1px; height:18px; background:var(--border); flex-shrink:0; }
+    .topbar-powered { font-size:0.72rem; color:var(--muted); white-space:nowrap; flex-shrink:0; }
+    .topbar-powered a { color:var(--primary); text-decoration:none; font-weight:600; }
+    .topbar-powered a:hover { text-decoration:underline; }
     .spacer { flex: 1; }
     .main { padding: 1.75rem; max-width: 1100px; margin: 0 auto; width: 100%; }
 
@@ -150,8 +160,14 @@
 <div id="screen-list" class="screen">
   <div class="admin-wrap">
     <div class="topbar">
-      <span class="topbar-title">⭐ Reviews Admin</span>
+      <a class="topbar-logo-wrap" href="https://mflowsuite.com" target="_blank" rel="noopener">
+        <img src="../assets/mflowsuite-logo.png" alt="MFlowSuite" />
+        <span class="topbar-logo-text">mflowsuite</span>
+      </a>
+      <div class="topbar-sep"></div>
+      <span class="topbar-title">Reviews Admin</span>
       <div class="spacer"></div>
+      <span class="topbar-powered">Powered by <a href="https://mflowsuite.com" target="_blank" rel="noopener">mflowsuite</a></span>
       <button class="btn btn-outline btn-sm" onclick="doLogout()">Salir</button>
     </div>
     <div class="main">
@@ -174,8 +190,14 @@
   <div class="admin-wrap">
     <div class="topbar">
       <button class="btn btn-outline btn-sm" onclick="goBackToList()">← Volver</button>
+      <a class="topbar-logo-wrap" href="https://mflowsuite.com" target="_blank" rel="noopener" style="margin-left:0.5rem">
+        <img src="../assets/mflowsuite-logo.png" alt="MFlowSuite" />
+        <span class="topbar-logo-text">mflowsuite</span>
+      </a>
+      <div class="topbar-sep"></div>
       <span class="topbar-title" id="form-title">Nuevo cliente</span>
       <div class="spacer"></div>
+      <span class="topbar-powered">Powered by <a href="https://mflowsuite.com" target="_blank" rel="noopener">mflowsuite</a></span>
     </div>
     <div class="main" style="padding-bottom: 72px">
       <div id="form-alert" style="display:none"></div>
