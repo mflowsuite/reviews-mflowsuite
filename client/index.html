@@ -110,10 +110,12 @@
       z-index: 10;
       box-shadow: 0 1px 4px rgba(0,0,0,0.06);
     }
-    .topbar-logo { display:flex; align-items:center; gap:0.45rem; text-decoration:none; white-space:nowrap; flex-shrink:0; }
-    .topbar-logo img { height:28px; width:28px; border-radius:6px; object-fit:cover; }
-    .topbar-logo-text { font-size:0.88rem; font-weight:800; color:var(--primary); }
-    .topbar-sep  { width:1px; height:18px; background:var(--border); flex-shrink:0; }
+    .topbar-logo { display:flex; align-items:center; gap:0.4rem; text-decoration:none; white-space:nowrap; flex-shrink:0; }
+    .topbar-logo img { height:36px; width:36px; border-radius:8px; object-fit:cover; }
+    .topbar-logo-stack { display:flex; flex-direction:column; line-height:1.1; }
+    .topbar-logo-text { font-size:0.82rem; font-weight:800; color:var(--primary); }
+    .topbar-logo-sub  { font-size:0.62rem; color:var(--muted); }
+    .topbar-sep  { width:1px; height:22px; background:var(--border); flex-shrink:0; margin:0 0.25rem; }
     .topbar-biz  { font-size:0.87rem; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:180px; }
     .topbar-powered { font-size:0.72rem; color:var(--muted); white-space:nowrap; flex-shrink:0; }
     .topbar-powered a { color:var(--primary); text-decoration:none; font-weight:600; }
@@ -391,12 +393,14 @@
     <div class="topbar">
       <a class="topbar-logo" href="https://mflowsuite.com" target="_blank" rel="noopener" title="mflowsuite.com">
         <img src="../assets/mflowsuite-logo.png" alt="MFlowSuite" />
-        <span class="topbar-logo-text">mflowsuite</span>
+        <div class="topbar-logo-stack">
+          <span class="topbar-logo-text">mflowsuite</span>
+          <span class="topbar-logo-sub">Powered by mflowsuite</span>
+        </div>
       </a>
       <div class="topbar-sep"></div>
       <span class="topbar-biz" id="topbar-biz-name"></span>
       <div class="spacer"></div>
-      <span class="topbar-powered">Powered by <a href="https://mflowsuite.com" target="_blank" rel="noopener">mflowsuite</a></span>
       <button class="btn btn-outline btn-sm" onclick="doLogout()">Salir</button>
     </div>
 
