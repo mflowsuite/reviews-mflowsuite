@@ -38,12 +38,12 @@
     /* ── pb-bar (admin) ── */
     #pb-bar { position:fixed; bottom:1.2rem; left:0; right:0; display:flex; justify-content:center; pointer-events:none; z-index:1; opacity:0; transition:opacity 0.5s; }
     #pb-bar.pb-visible { opacity:1; }
-    #pb-link { pointer-events:auto; text-decoration:none; display:inline-block; cursor:pointer; }
+    #pb-link { pointer-events:auto; text-decoration:none; display:inline-flex; align-items:center; cursor:pointer; background:rgba(0,0,0,0.28); backdrop-filter:blur(8px); border-radius:20px; padding:5px 12px 5px 8px; gap:0; }
     #pb-scene { position:relative; display:inline-block; }
     #pb-row { display:inline-flex; align-items:center; font:600 12px/1 'Segoe UI',system-ui,sans-serif; white-space:nowrap; user-select:none; gap:0; }
-    #pb-powered { color:rgba(255,255,255,.38); margin-right:2px; }
+    #pb-powered { color:rgba(255,255,255,.7); margin-right:2px; }
     #pb-slot { display:inline-block; width:20px; height:20px; margin:0 4px; flex-shrink:0; vertical-align:middle; }
-    .pb-ch { display:inline-block; color:rgba(255,255,255,.38); transform-origin:center bottom; will-change:transform,color; }
+    .pb-ch { display:inline-block; color:rgba(255,255,255,.7); transform-origin:center bottom; will-change:transform,color; }
     #pb-logo { position:absolute; width:20px; height:20px; left:0; top:0; border-radius:4px; object-fit:cover; transform-origin:center center; pointer-events:none; will-change:transform,opacity; opacity:0; filter:drop-shadow(0 0 0px rgba(60,130,255,0)); transition:filter .4s ease; }
     #pb-logo.pb-glowing { filter:drop-shadow(0 0 6px rgba(60,130,255,.8)); }
 

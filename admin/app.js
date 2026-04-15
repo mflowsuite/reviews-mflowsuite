@@ -112,6 +112,8 @@ function printQR() {
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
   document.getElementById('screen-' + id).classList.add('active');
+  const pbBar = document.getElementById('pb-bar');
+  if (pbBar) pbBar.style.display = id === 'login' ? 'flex' : 'none';
 }
 
 // ══════════════════════════════════════════════════════════
