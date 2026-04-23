@@ -47,7 +47,7 @@
     },
     {
       "parameters": {
-        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst email = String(body.email || '').toLowerCase().trim();\nconst password = String(body.password || '').trim();\nconst action = String(body.action || '').trim();\nconst fields = body.fields || null;\n\nif (!email || !action) {\n  throw new Error('email and action are required');\n}\nif (!['get', 'save', 'forgot-password'].includes(action)) {\n  throw new Error('invalid action');\n}\n// forgot-password does not require a password\nif (action !== 'forgot-password' && !password) {\n  throw new Error('password is required');\n}\n\nconst searchUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY?filterByFormula=' + encodeURIComponent(\"{notificationEmail}='\" + email + \"'\") + '&maxRecords=1';\n\nreturn [{ json: { email, password, action, fields, searchUrl } }];"
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst email = String(body.email || '').toLowerCase().trim();\nconst password = String(body.password || '').trim();\nconst action = String(body.action || '').trim();\nconst fields = body.fields || null;\nconst newPassword = String(body.newPassword || '').trim();\n\nif (!email || !action) {\n  throw new Error('email and action are required');\n}\nif (!['get', 'save', 'forgot-password', 'change-password'].includes(action)) {\n  throw new Error('invalid action');\n}\n// forgot-password does not require a password\nif (action !== 'forgot-password' && !password) {\n  throw new Error('password is required');\n}\n\nconst searchUrl = 'https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY?filterByFormula=' + encodeURIComponent(\"{notificationEmail}='\" + email + \"'\") + '&maxRecords=1';\n\nreturn [{ json: { email, password, action, fields, searchUrl, newPassword } }];"
       },
       "id": "code-validate-auth",
       "name": "Code - Validate Auth",
@@ -201,6 +201,56 @@
       "parameters": {
         "conditions": {
           "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
+          "conditions": [{"id":"c-action-chpwd","leftValue":"={{ $json.action }}","rightValue":"change-password","operator":{"type":"string","operation":"equals"}}],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "if-action-change-password",
+      "name": "IF - Action Change Password",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1680, 688]
+    },
+    {
+      "parameters": {
+        "method": "PATCH",
+        "url": "=https://api.airtable.com/v0/appwlnvY7rceVb06Q/tblxTlomzuupQcgyY/{{ $json.recordId }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {"parameters": [{"name": "Content-Type", "value": "application/json"}]},
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ fields: { clientPassword: $json.newPassword }, typecast: true }) }}",
+        "options": {}
+      },
+      "id": "http-update-password",
+      "name": "HTTP - Update Password",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1920, 560],
+      "credentials": {"httpHeaderAuth": {"id": "CDKXmqf7Ugjt0kAD", "name": "Airtable Admin PAT"}}
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\"message\": \"password_changed\"}",
+        "options": {
+          "responseCode": 200,
+          "responseHeaders": {"entries": [{"name": "Access-Control-Allow-Origin", "value": "*"}, {"name": "Content-Type", "value": "application/json"}]}
+        }
+      },
+      "id": "respond-password-changed",
+      "name": "Respond - Password Changed",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [2160, 560]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {"caseSensitive": true, "leftValue": "", "typeValidation": "strict"},
           "conditions": [{"id":"c-action-get","leftValue":"={{ $json.action }}","rightValue":"get","operator":{"type":"string","operation":"equals"}}],
           "combinator": "and"
         },
@@ -210,7 +260,7 @@
       "name": "IF - Action Get",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1680, 688]
+      "position": [1680, 944]
     },
     {
       "parameters": {
@@ -320,9 +370,16 @@
     "IF - Auth Failed": {
       "main": [
         [{"node": "Respond - Unauthorized", "type": "main", "index": 0}],
+        [{"node": "IF - Action Change Password", "type": "main", "index": 0}]
+      ]
+    },
+    "IF - Action Change Password": {
+      "main": [
+        [{"node": "HTTP - Update Password", "type": "main", "index": 0}],
         [{"node": "IF - Action Get", "type": "main", "index": 0}]
       ]
     },
+    "HTTP - Update Password": {"main": [[{"node": "Respond - Password Changed", "type": "main", "index": 0}]]},
     "IF - Action Get": {
       "main": [
         [{"node": "Respond - Get Client", "type": "main", "index": 0}],

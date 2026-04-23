@@ -574,6 +574,31 @@ function populateDashboard(client) {
   document.getElementById('f-color-picker').value = color;
 }
 
+/* ── Cambiar contraseña ─────────────────────────────── */
+async function changePassword() {
+  const newPwd     = document.getElementById('f-newPassword').value.trim();
+  const confirmPwd = document.getElementById('f-confirmPassword').value.trim();
+
+  setAlert('pwd-alert', '');
+
+  if (!newPwd)                  return setAlert('pwd-alert', 'Ingresá la nueva contraseña.');
+  if (newPwd.length < 4)        return setAlert('pwd-alert', 'Mínimo 4 caracteres.');
+  if (newPwd !== confirmPwd)    return setAlert('pwd-alert', 'Las contraseñas no coinciden.');
+
+  setLoadingBtn('pwd-btn', true);
+  try {
+    await callDashboard({ action: 'change-password', newPassword: newPwd });
+    state.password = newPwd;
+    sessionStorage.setItem('client_pwd', newPwd);
+    document.getElementById('f-newPassword').value   = '';
+    document.getElementById('f-confirmPassword').value = '';
+    setAlert('pwd-alert', '✅ Contraseña actualizada.', 'success');
+  } catch {
+    setAlert('pwd-alert', 'Error al cambiar la contraseña. Intentá de nuevo.');
+  }
+  setLoadingBtn('pwd-btn', false, 'Cambiar contraseña');
+}
+
 function openGoogleMapsSearch() {
   const name = (state.client && state.client.businessName) ||
                document.getElementById('f-businessName')?.value?.trim() || '';
