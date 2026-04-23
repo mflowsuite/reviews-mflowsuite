@@ -214,8 +214,9 @@
     .skip-link:hover { color: var(--primary); }
     /* ── Powered-by bar ── */
     #pb-bar { position:fixed; bottom:1.2rem; left:0; right:0; display:flex; justify-content:center; pointer-events:none; z-index:1; opacity:0; transition:opacity 0.5s; }
-    #pb-link { pointer-events:auto; text-decoration:none; display:inline-block; cursor:pointer; }
+    #pb-link { pointer-events:none; text-decoration:none; display:inline-block; cursor:pointer; }
     #pb-bar.pb-visible { opacity:1; }
+    #pb-bar.pb-visible #pb-link { pointer-events:auto; }
     #pb-scene { position:relative; display:inline-block; }
     #pb-row { display:inline-flex; align-items:center; font:600 12px/1 'Segoe UI',system-ui,sans-serif; white-space:nowrap; user-select:none; gap:0; }
     #pb-powered { color:rgba(255,255,255,.38); margin-right:2px; }

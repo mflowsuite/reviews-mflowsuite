@@ -333,6 +333,7 @@ function renderList() {
           <button class="btn btn-outline btn-sm" onclick="openForm('${rec.id}')">✏️ Editar</button>
           <button class="btn btn-outline btn-sm" onclick="openQR('${slug}','${name.replace(/'/g,"\\'")}')" >📱 QR</button>
           <a class="btn btn-outline btn-sm" href="${webUrl}" target="_blank">👁️ Ver</a>
+          <button class="btn btn-outline btn-sm btn-danger-outline" onclick="deleteClient('${rec.id}','${name.replace(/'/g,"\\'")}')">🗑️</button>
         </div>
       </div>`;
   }).join('');
@@ -599,6 +600,23 @@ async function saveClient() {
 
   btn.disabled    = false;
   btn.textContent = 'Guardar cliente';
+}
+
+// ══════════════════════════════════════════════════════════
+//  BORRAR CLIENTE
+// ══════════════════════════════════════════════════════════
+async function deleteClient(recordId, businessName) {
+  const confirmed = confirm(`¿Seguro que querés borrar "${businessName}"?\n\nEsta acción es permanente y no se puede deshacer.`);
+  if (!confirmed) return;
+
+  try {
+    await callN8n({ action: 'delete', recordId });
+    state.clients = state.clients.filter(r => r.id !== recordId);
+    renderList();
+  } catch (e) {
+    alert(`Error al borrar: ${e.message}`);
+    console.error(e);
+  }
 }
 
 function showFormAlert(msg) {
