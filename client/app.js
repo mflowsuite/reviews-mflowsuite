@@ -578,7 +578,7 @@ function openGoogleMapsSearch() {
   const name = (state.client && state.client.businessName) ||
                document.getElementById('f-businessName')?.value?.trim() || '';
   if (!name) { alert('Primero guardá el nombre del negocio.'); return; }
-  window.open('https://www.google.com/maps/search/' + encodeURIComponent(name), '_blank');
+  window.open('https://www.google.com/search?q=' + encodeURIComponent(name + ' reseñas google'), '_blank');
 }
 
 async function saveDashboard() {

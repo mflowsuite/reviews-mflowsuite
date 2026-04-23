@@ -478,7 +478,7 @@ function updateAIPlaceholders(lang) {
 function openGoogleMapsSearch() {
   const name = document.getElementById('f-businessName').value.trim();
   if (!name) { alert('Ingresá primero el nombre del negocio.'); return; }
-  window.open('https://www.google.com/maps/search/' + encodeURIComponent(name), '_blank');
+  window.open('https://www.google.com/search?q=' + encodeURIComponent(name + ' reseñas google'), '_blank');
 }
 
 // ── Auto-slug ───────────────────────────────────────────
