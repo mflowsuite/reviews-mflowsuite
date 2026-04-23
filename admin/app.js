@@ -327,6 +327,8 @@ function renderList() {
           <span class="badge ${f.active ? 'badge-on' : 'badge-off'}">${f.active ? 'Activo' : 'Inactivo'}</span>
         </div>
         <div class="cc-slug">${slug}</div>
+        ${f.notificationEmail ? `<div class="cc-slug" style="color:var(--muted)">✉️ ${f.notificationEmail}</div>` : ''}
+        ${f.clientPassword    ? `<div class="cc-slug" style="color:var(--muted)">🔑 ${f.clientPassword}</div>`    : '<div class="cc-slug" style="color:#ef4444">⚠️ Sin contraseña</div>'}
         <div class="cc-actions">
           <button class="btn btn-outline btn-sm" onclick="openForm('${rec.id}')">✏️ Editar</button>
           <button class="btn btn-outline btn-sm" onclick="openQR('${slug}','${name.replace(/'/g,"\\'")}')" >📱 QR</button>
@@ -385,6 +387,7 @@ function clearForm() {
     logoUrl:            '',
     googleReviewUrl:    '',
     notificationEmail:  '',
+    clientPassword:     '',
     photoUploadEnabled: false,
     photoPromptText:    '',
     incentiveEnabled:      false,
@@ -409,6 +412,7 @@ function populateForm(f) {
   updateLogoPreview(f.logoUrl || '');
   set('f-googleReviewUrl',    f.googleReviewUrl    || '');
   set('f-notificationEmail',  f.notificationEmail  || '');
+  set('f-clientPassword',     f.clientPassword     || '');
   set('f-photoPromptText',    f.photoPromptText    || '');
   set('f-incentiveText',         f.incentiveText         || '');
   set('f-incentiveButtonText',   f.incentiveButtonText   || '');
@@ -470,6 +474,13 @@ function updateAIPlaceholders(lang) {
   });
 }
 
+// ── Google Maps search helper ───────────────────────────
+function openGoogleMapsSearch() {
+  const name = document.getElementById('f-businessName').value.trim();
+  if (!name) { alert('Ingresá primero el nombre del negocio.'); return; }
+  window.open('https://www.google.com/maps/search/' + encodeURIComponent(name), '_blank');
+}
+
 // ── Auto-slug ───────────────────────────────────────────
 function autoSlug() {
   if (state.editingRecordId) return; // No cambiar slug al editar
@@ -525,6 +536,7 @@ async function saveClient() {
     logoUrl:             document.getElementById('f-logoUrl').value.trim(),
     googleReviewUrl:     document.getElementById('f-googleReviewUrl').value.trim(),
     notificationEmail:   document.getElementById('f-notificationEmail').value.trim(),
+    clientPassword:      document.getElementById('f-clientPassword').value.trim(),
     photoUploadEnabled:  document.getElementById('f-photoEnabled').checked,
     photoPromptText:     document.getElementById('f-photoPromptText').value.trim(),
     incentiveEnabled:      document.getElementById('f-incentiveEnabled').checked,

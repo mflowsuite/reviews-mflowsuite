@@ -304,10 +304,16 @@
         <div class="field">
           <label>URL de Google Reviews</label>
           <input type="url" id="f-googleReviewUrl" placeholder="https://g.page/r/XXXX/review" />
+          <p class="hint">¿No tenés el link? <a href="#" onclick="openGoogleMapsSearch(); return false;">📍 Buscar este negocio en Google Maps →</a></p>
         </div>
         <div class="field">
           <label>Email de notificaciones <span class="optional-tag">(para avisos de cupones)</span></label>
           <input type="email" id="f-notificationEmail" placeholder="dueno@negocio.com" autocomplete="off" />
+        </div>
+        <div class="field">
+          <label>Contraseña del portal cliente</label>
+          <input type="text" id="f-clientPassword" placeholder="ej: negocio2024" autocomplete="off" />
+          <p class="hint">El cliente entra con este email + contraseña en <a href="https://reviews.mflowsuite.com/client/" target="_blank">reviews.mflowsuite.com/client/</a></p>
         </div>
       </div>
 

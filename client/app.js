@@ -574,6 +574,13 @@ function populateDashboard(client) {
   document.getElementById('f-color-picker').value = color;
 }
 
+function openGoogleMapsSearch() {
+  const name = (state.client && state.client.businessName) ||
+               document.getElementById('f-businessName')?.value?.trim() || '';
+  if (!name) { alert('Primero guardá el nombre del negocio.'); return; }
+  window.open('https://www.google.com/maps/search/' + encodeURIComponent(name), '_blank');
+}
+
 async function saveDashboard() {
   const btn      = document.getElementById('save-btn');
   const statusEl = document.getElementById('save-status');
