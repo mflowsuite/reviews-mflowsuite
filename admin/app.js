@@ -328,7 +328,9 @@ function renderList() {
         </div>
         <div class="cc-slug">${slug}</div>
         ${f.notificationEmail ? `<div class="cc-slug" style="color:var(--muted)">✉️ ${f.notificationEmail}</div>` : ''}
-        ${f.clientPassword    ? `<div class="cc-slug" style="color:var(--muted)">🔑 ${f.clientPassword}</div>`    : '<div class="cc-slug" style="color:#ef4444">⚠️ Sin contraseña</div>'}
+        ${f.clientPassword
+          ? `<div class="cc-slug" style="color:var(--muted)">🔑 <span class="pwd-mask">••••••••</span><button class="btn-reveal-pwd" onclick="revealCardPwd(this)" data-pwd="${f.clientPassword.replace(/"/g,'&quot;')}" title="Ver contraseña">👁️</button></div>`
+          : '<div class="cc-slug" style="color:#ef4444">⚠️ Sin contraseña</div>'}
         <div class="cc-actions">
           <button class="btn btn-outline btn-sm" onclick="openForm('${rec.id}')">✏️ Editar</button>
           <button class="btn btn-outline btn-sm" onclick="openQR('${slug}','${name.replace(/'/g,"\\'")}')" >📱 QR</button>
@@ -600,6 +602,20 @@ async function saveClient() {
 
   btn.disabled    = false;
   btn.textContent = 'Guardar cliente';
+}
+
+// ══════════════════════════════════════════════════════════
+//  REVELAR CONTRASEÑA EN CARD
+// ══════════════════════════════════════════════════════════
+function revealCardPwd(btn) {
+  const entered = prompt('Ingresá tu contraseña de admin para ver la contraseña:');
+  if (entered === null) return;
+  if (entered === sessionStorage.getItem('admin_pwd')) {
+    btn.previousElementSibling.textContent = btn.dataset.pwd;
+    btn.remove();
+  } else {
+    alert('Contraseña incorrecta.');
+  }
 }
 
 // ══════════════════════════════════════════════════════════
