@@ -43,10 +43,12 @@
 ### Workflow C — Admin CRUD (`Daaqa7fMbmWBVDwC`)
 - **Webhook**: `POST /webhook/admin-clients`
 - **Auth**: clave `Mflow@dmin25` hardcodeada en Code node (no en el repo)
-- **Acciones**: `list`, `save` (create/update por recordId)
+- **Acciones**: `list`, `save` (create/update por recordId), `delete` (por recordId)
 - **Credencial Airtable**: "Airtable Admin PAT" — PAT con permisos read+write
 - **Update**: usa PATCH a Airtable con `{ fields, typecast: true }`
   - Campos vacíos se envían como `null` (no omitidos) para que Airtable los borre
+- **Delete**: usa DELETE a `https://api.airtable.com/v0/{base}/{table}/{recordId}`
+- **⚠️ Gitignoreado**: actualizaciones se hacen via MCP `update_workflow`. Después de cada update, re-asignar credencial "Airtable Admin PAT" a los 4 nodos HTTP manualmente en n8n UI.
 
 ### Workflow D — Upload Logo (`GYf9xxqMFW7GxKu9`)
 - **Webhook**: `POST /webhook/upload-logo`
@@ -470,8 +472,14 @@ const ADMIN_CONFIG = {
 - [ ] QR por cliente: ya funciona en el modal del admin, falta imprimir físico para Tino's
 - [ ] Resend: si el volumen crece, evaluar upgrade (plan Starter: 50.000/mes por USD 20)
 - [ ] Workflow A: si la respuesta se vuelve lenta, desconectar nodo OpenAI y dejarlo huérfano
-- [ ] Portal cliente: importar Workflow G y H en n8n UI + asignar credencial "OpenAi Guzel" al nodo OpenAI de Workflow G
+- [ ] **CRÍTICO**: Importar Workflow G y H en n8n UI — sin esto el portal del cliente no funciona
+  - Workflow G (`n8n-workflow-G-register-client.json`) → importar + asignar credencial "OpenAi Guzel" al nodo `HTTP - OpenAI Generate Config`
+  - Workflow H (`n8n-workflow-H-client-dashboard.json`) → re-importar (tiene forgot-password + change-password)
 - [ ] Portal cliente: probar registro completo end-to-end
+
+## Gotchas admin — contraseñas y delete (2026-04-23)
+- **Contraseñas enmascaradas**: en cards se muestra `••••••••` con botón 👁️ que valida contra `sessionStorage.getItem('admin_pwd')`. En el form el campo es `type=password` con toggle. Es anti-shoulder-surfing, no anti-bypass técnico.
+- **Borrar empresa**: botón 🗑️ en cada card → `confirm()` → `callN8n({action:'delete', recordId})` → Workflow C hace DELETE en Airtable. Irreversible.
 
 ## Completado ✅
 - [x] Prompt IA dinámico: campos `aiTopics`, `aiTones`, `aiStyles`, `aiMaxSentences`, `aiExtraInstructions` en Airtable. Workflows A y E los usan para generar texto variado.
@@ -489,3 +497,11 @@ const ADMIN_CONFIG = {
 - [x] Botón "Listo ya lo dejé" oculto hasta que el usuario abra Google Reviews — impide reclamar incentivo sin visitar Google.
 - [x] Seguridad: clave Resend expuesta en CLAUDE.md detectada por GitGuardian, revocada y reemplazada. Workflow F usa clave separada no afectada.
 - [x] Portal autoservicio para clientes: `/client/` con registro, login, dashboard. Workflows G (register) y H (client-dashboard) creados como JSON para importar en n8n. Campo `clientPassword` agregado a Airtable (`fldrmYxhYLAyk6uhe`).
+- [x] Fix mobile — card centrada: `flex-direction: column` en `body` de `style.css`.
+- [x] Fix "Ir a mi panel" → mflowsuite.com: `pb-link` invisible interceptaba clicks. Fix: `pointer-events:none` por defecto, solo `auto` cuando `pb-bar.pb-visible`.
+- [x] Admin — borrar empresa: botón 🗑️ + `action:'delete'` en Workflow C (DELETE Airtable).
+- [x] Admin — contraseñas enmascaradas: `••••••••` en cards, revelar pide contraseña de admin; form usa `type=password` con toggle.
+- [x] Admin — campo `clientPassword` editable en form + visible en cards.
+- [x] Admin — helper Google para obtener URL de reseñas.
+- [x] Portal cliente — cambiar contraseña: sección en dashboard, llama Workflow H `action:'change-password'`.
+- [x] Portal cliente — forgot-password: branch en Workflow H busca cliente por email, envía contraseña existente via Resend. (⚠️ requiere re-importar Workflow H en n8n)
